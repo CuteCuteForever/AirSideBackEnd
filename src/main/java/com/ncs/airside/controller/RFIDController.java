@@ -227,7 +227,7 @@ public class RFIDController {
             }
 
             //break out of while loop and sent back the transponder details with epc
-            Optional<RT_TRANSPONDER> transponderOptional = rt_transponder_repo.findByEPCAndRowRecordStatus(epc.toUpperCase() , "VALID");
+            Optional<RT_TRANSPONDER> transponderOptional = rt_transponder_repo.findByEPCAndServiceAvailabilityAndRowRecordStatus(epc.toUpperCase() , "Not Spare","valid");
             if (transponderOptional.isPresent()){
                 return ResponseEntity.ok().body(transponderOptional.get());
             }else {

@@ -1,7 +1,7 @@
 package com.ncs.airside.controller;
 
 import com.ncs.airside.Exception.RFIDCardReaderNotFoundException;
-import com.ncs.airside.repository.RT_TRANSPONDER_BORROWER_REPO;
+import com.ncs.airside.repository.RT_TRANSPONDER_STATUS_REPO;
 import com.ncs.airside.service.AsyncService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +21,7 @@ public class MockTestController {
     private String hostnameUrl;
 
     @Autowired
-    private RT_TRANSPONDER_BORROWER_REPO rt_transponder_borrower_repo;
+    private RT_TRANSPONDER_STATUS_REPO rt_transponder_STATUS_repo;
 
     private static Logger logger = LoggerFactory.getLogger(MockTestController.class);
 

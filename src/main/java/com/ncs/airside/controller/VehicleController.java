@@ -31,7 +31,7 @@ public class VehicleController {
         System.out.println(vehicle);
 
         Optional<RT_VEHICLE> vehicleOptional =  rt_vehicle_repo.
-                findByRegistrationNumberAndRowRecordStatus(vehicle.getRegistrationNumber(),"VALID");
+                findByRegistrationNumberAndRowRecordStatus(vehicle.getRegistrationNumber(),"valid");
 
         if (vehicleOptional.isPresent()){
             return ResponseEntity

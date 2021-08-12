@@ -37,10 +37,9 @@ Go to front end and create a user and login.
 How to start testing
 ===============================
 1) Ensure that the following tables are empty by executing following SQL :
-- truncate table airsidedb.rt_transponder_BORROW;
+- truncate table airsidedb.rt_transponder_STATUS;
 - truncate table airsidedb.rt_epc_alert;
 2) Check from front end the filename - "mock-test.service.ts" that the comport for the antenna
 
 
-CREATE TABLE airsidedb.rt_transponder_borrow (  transponder_borrow_id bigint NOT NULL,  epc varchar(255) DEFAULT NULL,    companyid bigint DEFAULT NULL,  borrow_timestamp datetime(6) DEFAULT NULL,  return_timestamp datetime(6) DEFAULT NULL,   transponder_id bigint DEFAULT NULL,  vehicle_id bigint DEFAULT NULL,  row_record_status varchar(255) DEFAULT NULL,  timestamp datetime(6) DEFAULT NULL,  PRIMARY KEY (transponder_borrow_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
-
+E20030340404010

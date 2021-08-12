@@ -1,107 +1,77 @@
-/*
 package com.ncs.airside.controller;
 
-import com.ncs.airside.service.AsyncService;
-import com.syc.function.Function;
+import com.ncs.airside.model.account.MessageResponse;
+import com.ncs.airside.model.database.RT_TRANSPONDER_STATUS;
+import com.ncs.airside.repository.RT_TRANSPONDER_STATUS_REPO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 public class TransponderStatusController {
 
-    private static Logger logger = LoggerFactory.getLogger(TransponderStatusController.class);
+
+    private static Logger logger = LoggerFactory.getLogger(CustomerBillingController.class);
 
     @Autowired
-    private TR transponderStatusRepo;
+    private RT_TRANSPONDER_STATUS_REPO rt_transponder_status_repo;
 
-    @Autowired
-    private AsyncService service;
+    @GetMapping("/transponderstatus")
+    public ResponseEntity<Object> retrieveTransponderStatus(){
 
-    @GetMapping("/transponderStatuses")
-    public List<TransponderStatus> retrieveAllTransponderStatuses(){
-        return transponderStatusRepo.findAll();
+        List<RT_TRANSPONDER_STATUS> transponder_statusesList = this.rt_transponder_status_repo.findAll();
+
+        return ResponseEntity.ok().body(transponder_statusesList);
+
     }
 
-    */
-/*@GetMapping("/scanTransponderCardReader")
-    public ResponseEntity<Object> createTransponderStatus(){
+    @PostMapping(path = "/insertborrowtransponder" , consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity insertBorrowTransponder(@RequestBody List<RT_TRANSPONDER_STATUS> rt_transponder_status_List){
 
-        String epc="";
-        epc = scanGetEPC();
+        rt_transponder_status_List.forEach( item -> {
+            item.setIn_timestamp(null); ; // no need in_timestamp for borrowing of transponder
+            this.rt_transponder_status_repo.save(item);
+        });
 
-        if (epc==null){
-            return ResponseEntity.ok().body("Please initiate RFID Card Reader Port");
-        }
-
-        Optional<TransponderStatus> transponderStatusOptional = transponderStatusRepo.findByEPCAndRowRecordStatus(epc , "VALID");
-
-        if (transponderStatusOptional.isPresent()){
-            TransponderStatus transponderStatus = transponderStatusOptional.get();
-            transponderStatus.setRowRecordStatus("INVALID");
-            transponderStatusRepo.save(transponderStatus);
-        }
-
-        TransponderStatus transponderStatus = new TransponderStatus();
-        transponderStatus.setRowRecordStatus("VALID");
-        transponderStatus.setTimestamp(LocalDateTime.now());
-        transponderStatusRepo.save(transponderStatus);
-        return ResponseEntity.ok().body("Scan tag Added to database successfully");
-    }
-*//*
-
-
-    public String scanGetEPC(){
-        byte[] arrBuffer = new byte[40960];
-        int[] iNum = new int[2];
-        int[] iTotalLen = new int[2];
-        byte bRet = 0;
-
-        bRet = Function.RFID.instance.CFHid_GetTagBuf(arrBuffer, iTotalLen, iNum);
-
-        int iTagNumber = 0;
-        iTagNumber = iNum[0];
-        if (iTagNumber == 0)
-            return null
-        ;
-        int iIndex = 0;
-        int iLength = 0;
-        byte bPackLength = 0;
-        int iIDLen = 0;
-        int i = 0;
-
-        for (iIndex = 0; iIndex < iTagNumber; iIndex++) {
-            bPackLength = arrBuffer[iLength];
-            String str2 = "";
-            String str1 = "";
-            if ((arrBuffer[1 + iLength + 0] & 0x80) == 0x80)  // with TimeStamp , last 6 bytes is time
-            {
-                iIDLen = bPackLength - 7;
-            } else iIDLen = bPackLength - 1;
-
-            String str3 = "";
-            for (i = 2; i < iIDLen; i++) {
-                str1 = String.format("%02X", arrBuffer[1 + iLength + i]);
-                str3 = str3 + str1 + "";
-            }
-            str2 = str2 + str3;
-
-            return str2;
-        }
-
-        return null;
+        return ResponseEntity.ok().body(new MessageResponse("Transponder successfully borrowed"));
     }
 
+    @GetMapping(path = "/getborrowedtransponder/{epcNumber}/{rowRecordStatus}" , consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity getBorrowedTransponder(@PathVariable String epcNumber , @PathVariable String rowRecordStatus){
 
+        Optional<RT_TRANSPONDER_STATUS> transponderBorrowerOptional = rt_transponder_status_repo.findByEPCAndRowRecordStatus(epcNumber, rowRecordStatus);
 
+        if (transponderBorrowerOptional.isPresent() ){
+            return ResponseEntity.ok().body(transponderBorrowerOptional.get());
+        }
 
+        return ResponseEntity.badRequest().body(new MessageResponse("unable to find borrowed Transponder with epc "+epcNumber));
+    }
 
+    @GetMapping("/updatetransponderstatus/{epcNumber}/{status}")
+    public ResponseEntity<Object> updateTransponderStatus(@PathVariable String epcNumber , @PathVariable String status){
 
+        Optional<RT_TRANSPONDER_STATUS> transponderBorrowerOptional = rt_transponder_status_repo.findByEPCAndRowRecordStatus(epcNumber , "VALID");
 
+        if (transponderBorrowerOptional.isPresent()){
+            RT_TRANSPONDER_STATUS temp = transponderBorrowerOptional.get();
+            temp.setRowRecordStatus("invalid");
+            rt_transponder_status_repo.save(temp) ;
+            return ResponseEntity
+                    .ok()
+                    .body(new MessageResponse("Set Status to Invalid Successfully"));
+        }
+
+        return ResponseEntity
+                .badRequest()
+                .body(new MessageResponse("Unable to find respective EPC "+epcNumber));
+
+    }
 
 }
-*/

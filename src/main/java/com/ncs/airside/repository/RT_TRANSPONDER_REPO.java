@@ -8,7 +8,7 @@ import java.util.Optional;
 
 @Repository
 public interface RT_TRANSPONDER_REPO extends JpaRepository<RT_TRANSPONDER, Long> {
-    Optional<RT_TRANSPONDER> findByEPCAndRowRecordStatus(String epc , String rowRecordStatus);
-    Optional<RT_TRANSPONDER> findByCallSignAndRowRecordStatus(String callSign , String rowRecordStatus);
+    Optional<RT_TRANSPONDER> findByEPCAndServiceAvailabilityAndRowRecordStatus(String epc , String serviceAvailability , String rowRecordStatus);
+    Optional<RT_TRANSPONDER> findByCallSignAndServiceAvailabilityAndRowRecordStatus(String callSign , String serviceAvailability , String rowRecordStatus);
 }
 

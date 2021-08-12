@@ -29,7 +29,7 @@ public class CompanyController {
 
         System.out.println(company);
         Optional<RT_COMPANY> companyOptional =  rt_company_repo.
-                findByCompanyNameAndRowRecordStatus(company.getCompanyName(),"VALID");
+                findByCompanyNameAndRowRecordStatus(company.getCompanyName(),"valid");
 
         if (companyOptional.isPresent()){
             return ResponseEntity

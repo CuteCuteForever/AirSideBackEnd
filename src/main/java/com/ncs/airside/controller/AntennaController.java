@@ -1,37 +1,23 @@
 package com.ncs.airside.controller;
 
-import com.ncs.airside.Exception.SoundAlertException;
-import com.ncs.airside.helper.SoundUtils;
 import com.ncs.airside.model.account.MessageResponse;
 import com.ncs.airside.model.database.RT_EPC_ALERT;
-import com.ncs.airside.model.database.RT_TRANSPONDER_BORROW;
-import com.ncs.airside.model.rfid.RfidResponse;
+import com.ncs.airside.model.database.RT_TRANSPONDER_STATUS;
 import com.ncs.airside.repository.RT_EPC_ALERT_REPO;
-import com.ncs.airside.repository.RT_TRANSPONDER_BORROWER_REPO;
+import com.ncs.airside.repository.RT_TRANSPONDER_STATUS_REPO;
 import com.ncs.airside.service.AsyncService;
 import com.rfid.uhf.Device;
-import com.syc.function.Function;
-import org.aspectj.bridge.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
-import reactor.core.publisher.Flux;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.Locale;
 import java.util.Optional;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @RestController
@@ -44,7 +30,7 @@ public class AntennaController {
     private AsyncService asyncService;
 
     @Autowired
-    private RT_TRANSPONDER_BORROWER_REPO rt_transponder_borrower_repo;
+    private RT_TRANSPONDER_STATUS_REPO rt_transponder_STATUS_repo;
 
     @Autowired
     private  RT_EPC_ALERT_REPO rt_epc_alert_repo ;
@@ -537,15 +523,15 @@ public class AntennaController {
                         EPCMemData = Memdata.toUpperCase() ;
                     }
 
-                    Optional<RT_TRANSPONDER_BORROW> transponderBorrowerOptional = rt_transponder_borrower_repo.findByEPCAndRowRecordStatus(EPCMemData, "VALID");
-                    Optional<RT_EPC_ALERT> epcAlertOptional = rt_epc_alert_repo.findByEpcAndRowRecordStatus(EPCMemData , "VALID");
+                    Optional<RT_TRANSPONDER_STATUS> transponderBorrowerOptional = rt_transponder_STATUS_repo.findByEPCAndRowRecordStatus(EPCMemData, "VALID");
+                    Optional<RT_EPC_ALERT> epcAlertOptional = rt_epc_alert_repo.findByEpcAndRowRecordStatus(EPCMemData , "valid");
 
                     if (!transponderBorrowerOptional.isPresent() && !epcAlertOptional.isPresent() && !EPCMemData.equals("")){
 
                         RT_EPC_ALERT epc_alert = new RT_EPC_ALERT();
                         epc_alert.setEpc(EPCMemData);
                         epc_alert.setTimestamp(LocalDateTime.now());
-                        epc_alert.setRowRecordStatus("VALID");
+                        epc_alert.setRowRecordStatus("valid");
                         rt_epc_alert_repo.save(epc_alert) ;
                         logger.info("Inserted to EPC Alert table "+EPCMemData);
 

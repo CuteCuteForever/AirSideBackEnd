@@ -1,10 +1,7 @@
 package com.ncs.airside.controller;
 
 import com.ncs.airside.model.account.MessageResponse;
-import com.ncs.airside.model.database.RT_COMPANY;
-import com.ncs.airside.model.database.RT_EPC_ALERT;
 import com.ncs.airside.model.database.RT_TRANSPONDER;
-import com.ncs.airside.repository.RT_TRANSPONDER_BORROWER_REPO;
 import com.ncs.airside.repository.RT_TRANSPONDER_REPO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,7 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,12 +26,10 @@ public class TransponderController {
     }
 
     @PostMapping("/insertTransponder")
-    public ResponseEntity<Object> createCustomerInformation(@RequestBody RT_TRANSPONDER rt_transponder){
+    public ResponseEntity<Object> insertTransponder(@RequestBody RT_TRANSPONDER rt_transponder){
 
-
-
-        Optional<RT_TRANSPONDER> chkEPCOptional = rt_transponder_repo.findByEPCAndRowRecordStatus(rt_transponder.getEPC() , "valid");
-        Optional<RT_TRANSPONDER> chkCallSignOptional = rt_transponder_repo.findByCallSignAndRowRecordStatus(rt_transponder.getCallSign() , "valid");
+        Optional<RT_TRANSPONDER> chkEPCOptional = rt_transponder_repo.findByEPCAndServiceAvailabilityAndRowRecordStatus(rt_transponder.getEPC() , "Not Spare", "valid");
+        Optional<RT_TRANSPONDER> chkCallSignOptional = rt_transponder_repo.findByCallSignAndServiceAvailabilityAndRowRecordStatus(rt_transponder.getCallSign() , "Not Spare","valid");
 
         if (chkEPCOptional.isPresent()){
             return ResponseEntity
@@ -59,7 +53,7 @@ public class TransponderController {
     @GetMapping("/gettransponderbyepc/{epcNumber}/{rowRecordStatus}")
     public ResponseEntity getTransponderByEPC(@PathVariable String epcNumber, @PathVariable String rowRecordStatus){
 
-        Optional<RT_TRANSPONDER> transponderOptional = rt_transponder_repo.findByEPCAndRowRecordStatus(epcNumber , rowRecordStatus);
+        Optional<RT_TRANSPONDER> transponderOptional = rt_transponder_repo.findByEPCAndServiceAvailabilityAndRowRecordStatus(epcNumber , "Not Spare", rowRecordStatus);
 
         if (transponderOptional.isPresent()){
             return ResponseEntity.ok().body(transponderOptional.get());
@@ -70,7 +64,7 @@ public class TransponderController {
     @GetMapping("/gettransponderbycallsign/{callsign}/{rowRecordStatus}")
     public ResponseEntity getTransponderByCallSign(@PathVariable String callsign , @PathVariable String rowRecordStatus){
 
-        Optional<RT_TRANSPONDER> transponderOptional = rt_transponder_repo.findByCallSignAndRowRecordStatus(callsign , rowRecordStatus);
+        Optional<RT_TRANSPONDER> transponderOptional = rt_transponder_repo.findByCallSignAndServiceAvailabilityAndRowRecordStatus(callsign , "Not Spare", rowRecordStatus);
 
         if (transponderOptional.isPresent()){
             return ResponseEntity.ok().body(transponderOptional.get());
@@ -81,7 +75,7 @@ public class TransponderController {
     @GetMapping("updatetransponderstatus/{epcNumber}/{transponderstatus}")
     public void updateTransponderStatus(@PathVariable String epcNumber , @PathVariable String transponderstatus  ) {
 
-        Optional<RT_TRANSPONDER> transponderOptional = rt_transponder_repo.findByEPCAndRowRecordStatus(epcNumber , "VALID");
+        Optional<RT_TRANSPONDER> transponderOptional = rt_transponder_repo.findByEPCAndServiceAvailabilityAndRowRecordStatus(epcNumber , "Not Spare", "VALID");
         transponderOptional.get().setServiceAvailability(transponderstatus);
         rt_transponder_repo.save(transponderOptional.get());
 

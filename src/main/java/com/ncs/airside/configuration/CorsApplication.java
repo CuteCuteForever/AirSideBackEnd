@@ -69,6 +69,8 @@ public class CorsApplication {
                 registry.addMapping("/gettransponderbyepc/**").allowedOrigins("http://localhost:4200");
                 registry.addMapping("/**").allowedOrigins("http://localhost:4200");
                 registry.addMapping("/updatetransponderstatus/**").allowedOrigins("http://localhost:4200");
+                registry.addMapping("/insertborrowtransponder/**").allowedOrigins("http://localhost:4200");
+                registry.addMapping("/insertborrowtransponder").allowedOrigins("http://localhost:4200");
             }
         };
     }
