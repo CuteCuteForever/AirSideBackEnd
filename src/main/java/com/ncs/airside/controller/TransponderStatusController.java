@@ -6,8 +6,10 @@ import com.ncs.airside.model.database.RT_TRANSPONDER_STATUS;
 import com.ncs.airside.model.helper.RT_REPAIR_TRANSPONDER;
 import com.ncs.airside.model.helper.RT_RETURN_TRANSPONDER;
 import com.ncs.airside.model.helper.RT_SERVICED_TRANSPONDER;
+import com.ncs.airside.model.view.V_TRANSPONDER_STATUS;
 import com.ncs.airside.repository.RT_TRANSPONDER_REPO;
 import com.ncs.airside.repository.RT_TRANSPONDER_STATUS_REPO;
+import com.ncs.airside.repository.V_TRANSPONDER_STATUS_REPO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +32,15 @@ public class TransponderStatusController {
 
     @Autowired
     private RT_TRANSPONDER_REPO rt_transponder_repo;
+    @Autowired
+    private V_TRANSPONDER_STATUS_REPO v_transponder_status_repo;
+
+    @GetMapping("/transponderstatusview")
+    public ResponseEntity<Object> retrieveTransponderStatusView(){
+
+        List<V_TRANSPONDER_STATUS> v_transponder_statusList = this.v_transponder_status_repo.findAll();
+        return ResponseEntity.ok().body(v_transponder_statusList);
+    }
 
     @GetMapping("/transponderstatus")
     public ResponseEntity<Object> retrieveTransponderStatus(){

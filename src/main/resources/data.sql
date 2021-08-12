@@ -30,54 +30,41 @@ where a.row_record_status = 'valid'
 and b.row_record_status = 'valid';
 
 
-create or replace view airsidedb.v_borrow_return_status as
-Select a.* , b.epc, b.call_sign,b.serial_number, b.transponder_status  from
+create or replace view airsidedb.v_transponder_status as
+Select *  from
 (
 WITH difference_in_seconds AS (
   SELECT
-    aa.id,
-    aa.epc,
-    aa.borrow_time_stamp,
-    aa.return_time_stamp,
-    aa.row_record_status,
-    TIMESTAMPDIFF(SECOND, borrow_time_stamp ,return_time_stamp) AS seconds
+    aa.*,
+    TIMESTAMPDIFF(SECOND, out_timestamp ,in_timestamp) AS seconds
   FROM
   (
-  select
-a.transponderID as id,
-a.epc,
-a.companyid,
-a.timestamp as borrow_time_stamp,
-b.timestamp as return_time_stamp,
-a.row_record_status as row_record_status
-from airsidedb.rt_transponder_borrow a left join airsidedb.rt_transponder_return b
-on a.epc = b.epc
+  select a.* ,
+b.registration_number,
+c.company_name, c.address , c.contact_person_name, c.contact_person_number, c.department,
+d.call_sign, d.serial_number, d.service_availability, d.description, d.warranty_from_date, d.warranty_to_date
+from airsidedb.rt_transponder_status a
+left join airsidedb.rt_vehicle b on a.vehicle_id = b.vehicle_id and b.row_record_status = "valid"
+left join airsidedb.rt_company c on a.company_id = c.company_id and c.row_record_status = "valid"
+left join airsidedb.rt_transponder d on a.transponder_id = d.transponder_id and d.row_record_status = "valid"
   ) as aa
 ),
 differences AS (
   SELECT
-    id,
-    borrow_time_stamp,
-    return_time_stamp,
-    row_record_status,
-    seconds,
+    *,
     MOD(seconds, 60) AS seconds_part,
     MOD(seconds, 3600) AS minutes_part,
     MOD(seconds, 3600 * 24) AS hours_part
   FROM difference_in_seconds
 )
 SELECT
-  id,
-  borrow_time_stamp,
-  return_time_stamp,
-  row_record_status,
+  *,
   CONCAT(
     FLOOR(seconds / 3600 / 24), ' days ',
     FLOOR(hours_part / 3600), ' hours ',
     FLOOR(minutes_part / 60), ' minutes ',
     seconds_part, ' seconds'
-  ) AS difference
+  ) AS duration
 FROM differences
-) as a inner join airsidedb.rt_transponder b where a.id = b.transponderid and b.row_record_status = 'VALID'
+) as a
 
--- Testing --

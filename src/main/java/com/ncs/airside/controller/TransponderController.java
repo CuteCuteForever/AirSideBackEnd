@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -43,6 +44,12 @@ public class TransponderController {
                     .body(new MessageResponse("Call Sign Existed. Please use another EPC."));
         }
 
+       /* LocalDateTime warrantyFromDate = LocalDateTime.parse(rt_transponder.getWarrantyFromDate().toString());
+        rt_transponder.setWarrantyFromDate(warrantyFromDate.toLocalDate());
+
+        LocalDateTime warrantyToDate = LocalDateTime.parse(rt_transponder.getWarrantyToDate().toString());
+        rt_transponder.setWarrantyToDate(warrantyToDate.toLocalDate());
+*/
         rt_transponder_repo.save(rt_transponder);
 
         return ResponseEntity

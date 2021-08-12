@@ -3,6 +3,7 @@ package com.ncs.airside.model.database;
 import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -17,8 +18,8 @@ public class RT_TRANSPONDER {
     private String serialNumber;
     private String callSign;
     private String description;
-    private LocalDateTime warrantyFromDate;
-    private LocalDateTime warrantyToDate;
+    private LocalDate warrantyFromDate;
+    private LocalDate warrantyToDate;
     private String EPC ;
     private String serviceAvailability;
     private LocalDateTime timestamp ;
@@ -27,7 +28,7 @@ public class RT_TRANSPONDER {
     public RT_TRANSPONDER() {
     }
 
-    public RT_TRANSPONDER(Long transponderId, String serialNumber, String callSign, String description, LocalDateTime warrantyFromDate, LocalDateTime warrantyToDate, String EPC, String serviceAvailability, LocalDateTime timestamp, String rowRecordStatus) {
+    public RT_TRANSPONDER(Long transponderId, String serialNumber, String callSign, String description, LocalDate warrantyFromDate, LocalDate warrantyToDate, String EPC, String serviceAvailability, LocalDateTime timestamp, String rowRecordStatus) {
         this.transponderId = transponderId;
         this.serialNumber = serialNumber;
         this.callSign = callSign;
@@ -40,19 +41,19 @@ public class RT_TRANSPONDER {
         this.rowRecordStatus = rowRecordStatus;
     }
 
-    public LocalDateTime getWarrantyFromDate() {
+    public LocalDate getWarrantyFromDate() {
         return warrantyFromDate;
     }
 
-    public void setWarrantyFromDate(LocalDateTime warrantyFromDate) {
+    public void setWarrantyFromDate(LocalDate warrantyFromDate) {
         this.warrantyFromDate = warrantyFromDate;
     }
 
-    public LocalDateTime getWarrantyToDate() {
+    public LocalDate getWarrantyToDate() {
         return warrantyToDate;
     }
 
-    public void setWarrantyToDate(LocalDateTime warrantyToDate) {
+    public void setWarrantyToDate(LocalDate warrantyToDate) {
         this.warrantyToDate = warrantyToDate;
     }
 
