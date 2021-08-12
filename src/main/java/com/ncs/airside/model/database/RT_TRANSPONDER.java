@@ -17,7 +17,8 @@ public class RT_TRANSPONDER {
     private String serialNumber;
     private String callSign;
     private String description;
-    private LocalDateTime warranty;
+    private LocalDateTime warrantyFromDate;
+    private LocalDateTime warrantyToDate;
     private String EPC ;
     private String serviceAvailability;
     private LocalDateTime timestamp ;
@@ -26,24 +27,33 @@ public class RT_TRANSPONDER {
     public RT_TRANSPONDER() {
     }
 
-    public RT_TRANSPONDER(Long transponderId, String serialNumber, String callSign, String description, LocalDateTime warranty, String EPC, String serviceAvailability, LocalDateTime timestamp, String rowRecordStatus) {
+    public RT_TRANSPONDER(Long transponderId, String serialNumber, String callSign, String description, LocalDateTime warrantyFromDate, LocalDateTime warrantyToDate, String EPC, String serviceAvailability, LocalDateTime timestamp, String rowRecordStatus) {
         this.transponderId = transponderId;
         this.serialNumber = serialNumber;
         this.callSign = callSign;
         this.description = description;
-        this.warranty = warranty;
+        this.warrantyFromDate = warrantyFromDate;
+        this.warrantyToDate = warrantyToDate;
         this.EPC = EPC;
         this.serviceAvailability = serviceAvailability;
         this.timestamp = timestamp;
         this.rowRecordStatus = rowRecordStatus;
     }
 
-    public LocalDateTime getWarranty() {
-        return warranty;
+    public LocalDateTime getWarrantyFromDate() {
+        return warrantyFromDate;
     }
 
-    public void setWarranty(LocalDateTime warranty) {
-        this.warranty = warranty;
+    public void setWarrantyFromDate(LocalDateTime warrantyFromDate) {
+        this.warrantyFromDate = warrantyFromDate;
+    }
+
+    public LocalDateTime getWarrantyToDate() {
+        return warrantyToDate;
+    }
+
+    public void setWarrantyToDate(LocalDateTime warrantyToDate) {
+        this.warrantyToDate = warrantyToDate;
     }
 
     public Long getTransponderId() {

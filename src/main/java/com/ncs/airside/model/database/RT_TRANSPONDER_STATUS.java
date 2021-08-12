@@ -18,8 +18,9 @@ public class RT_TRANSPONDER_STATUS {
 
     private String EPC;
     private Long companyId;
-    private LocalDateTime out_timestamp;
-    private LocalDateTime in_timestamp;
+    private LocalDateTime outTimestamp;
+    private LocalDateTime inTimestamp;
+    private String rentalDuration;
     private Long transponderId;
     private String transponderStatus;
     private Long vehicleId;
@@ -29,12 +30,13 @@ public class RT_TRANSPONDER_STATUS {
     public RT_TRANSPONDER_STATUS() {
     }
 
-    public RT_TRANSPONDER_STATUS(Long transponderStatusId, String EPC, Long companyId, LocalDateTime out_timestamp, LocalDateTime in_timestamp, Long transponderId, String transponderStatus, Long vehicleId, String rowRecordStatus, LocalDateTime timestamp) {
+    public RT_TRANSPONDER_STATUS(Long transponderStatusId, String EPC, Long companyId, LocalDateTime outTimestamp, LocalDateTime inTimestamp, String rentalDuration, Long transponderId, String transponderStatus, Long vehicleId, String rowRecordStatus, LocalDateTime timestamp) {
         this.transponderStatusId = transponderStatusId;
         this.EPC = EPC;
         this.companyId = companyId;
-        this.out_timestamp = out_timestamp;
-        this.in_timestamp = in_timestamp;
+        this.outTimestamp = outTimestamp;
+        this.inTimestamp = inTimestamp;
+        this.rentalDuration = rentalDuration;
         this.transponderId = transponderId;
         this.transponderStatus = transponderStatus;
         this.vehicleId = vehicleId;
@@ -66,20 +68,20 @@ public class RT_TRANSPONDER_STATUS {
         this.companyId = companyId;
     }
 
-    public LocalDateTime getOut_timestamp() {
-        return out_timestamp;
+    public LocalDateTime getOutTimestamp() {
+        return outTimestamp;
     }
 
-    public void setOut_timestamp(LocalDateTime out_timestamp) {
-        this.out_timestamp = out_timestamp;
+    public void setOutTimestamp(LocalDateTime outTimestamp) {
+        this.outTimestamp = outTimestamp;
     }
 
-    public LocalDateTime getIn_timestamp() {
-        return in_timestamp;
+    public LocalDateTime getInTimestamp() {
+        return inTimestamp;
     }
 
-    public void setIn_timestamp(LocalDateTime in_timestamp) {
-        this.in_timestamp = in_timestamp;
+    public void setInTimestamp(LocalDateTime inTimestamp) {
+        this.inTimestamp = inTimestamp;
     }
 
     public Long getTransponderId() {
@@ -120,5 +122,13 @@ public class RT_TRANSPONDER_STATUS {
 
     public void setTimestamp(LocalDateTime timestamp) {
         this.timestamp = timestamp;
+    }
+
+    public String getRentalDuration() {
+        return rentalDuration;
+    }
+
+    public void setRentalDuration(String rentalDuration) {
+        this.rentalDuration = rentalDuration;
     }
 }

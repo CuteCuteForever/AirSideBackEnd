@@ -231,7 +231,7 @@ public class RFIDController {
             if (transponderOptional.isPresent()){
                 return ResponseEntity.ok().body(transponderOptional.get());
             }else {
-                return ResponseEntity.badRequest().body(new MessageResponse("EPC not registered with any transponder. Please register EPC wih transponder."));
+                return ResponseEntity.badRequest().body(new MessageResponse("EPC not registered with any Not Spare transponder. Please register EPC wih transponder."));
             }
 
         } catch (Exception ex){
