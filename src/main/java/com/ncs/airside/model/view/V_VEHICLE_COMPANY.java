@@ -15,66 +15,76 @@ import javax.persistence.Table;
 public class V_VEHICLE_COMPANY {
 
     @Id
-    private Long companyID;
+    private Long companyId;
 
-    private String company_name;
-    private String company_address;
-    private String contact_person_name;
-    private String contact_person_number;
+    private Long vehicleId;
+    private String companyName;
+    private String companyAddress;
+    private String contactPersonName;
+    private String contactPersonNumber;
     private String department;
-    private String vehicle_registration_number;
+    private String vehicleRegistrationNumber;
 
     public V_VEHICLE_COMPANY() {
     }
 
-    public V_VEHICLE_COMPANY(Long companyID, String company_name, String company_address, String contact_person_name, String contact_person_number, String department, String vehicle_registration_number) {
-        this.companyID = companyID;
-        this.company_name = company_name;
-        this.company_address = company_address;
-        this.contact_person_name = contact_person_name;
-        this.contact_person_number = contact_person_number;
+    public V_VEHICLE_COMPANY(Long companyId, Long vehicleId, String companyName, String companyAddress, String contactPersonName, String contactPersonNumber, String department, String vehicleRegistrationNumber) {
+        this.companyId = companyId;
+        this.vehicleId = vehicleId;
+        this.companyName = companyName;
+        this.companyAddress = companyAddress;
+        this.contactPersonName = contactPersonName;
+        this.contactPersonNumber = contactPersonNumber;
         this.department = department;
-        this.vehicle_registration_number = vehicle_registration_number;
+        this.vehicleRegistrationNumber = vehicleRegistrationNumber;
     }
 
-    public Long getCompanyID() {
-        return companyID;
+    public Long getCompanyId() {
+        return companyId;
     }
 
-    public void setCompanyID(Long companyID) {
-        this.companyID = companyID;
+    public void setCompanyId(Long companyId) {
+        this.companyId = companyId;
     }
 
-    public String getCompany_name() {
-        return company_name;
+    public Long getVehicleId() {
+        return vehicleId;
     }
 
-    public void setCompany_name(String company_name) {
-        this.company_name = company_name;
+    public void setVehicleId(Long vehicleId) {
+        this.vehicleId = vehicleId;
     }
 
-    public String getCompany_address() {
-        return company_address;
+    public String getCompanyName() {
+        return companyName;
     }
 
-    public void setCompany_address(String company_address) {
-        this.company_address = company_address;
+    public void setCompanyName(String companyName) {
+        this.companyName = companyName;
     }
 
-    public String getContact_person_name() {
-        return contact_person_name;
+    public String getCompanyAddress() {
+        return companyAddress;
     }
 
-    public void setContact_person_name(String contact_person_name) {
-        this.contact_person_name = contact_person_name;
+    public void setCompanyAddress(String companyAddress) {
+        this.companyAddress = companyAddress;
     }
 
-    public String getContact_person_number() {
-        return contact_person_number;
+    public String getContactPersonName() {
+        return contactPersonName;
     }
 
-    public void setContact_person_number(String contact_person_number) {
-        this.contact_person_number = contact_person_number;
+    public void setContactPersonName(String contactPersonName) {
+        this.contactPersonName = contactPersonName;
+    }
+
+    public String getContactPersonNumber() {
+        return contactPersonNumber;
+    }
+
+    public void setContactPersonNumber(String contactPersonNumber) {
+        this.contactPersonNumber = contactPersonNumber;
     }
 
     public String getDepartment() {
@@ -85,11 +95,11 @@ public class V_VEHICLE_COMPANY {
         this.department = department;
     }
 
-    public String getVehicle_registration_number() {
-        return vehicle_registration_number;
+    public String getVehicleRegistrationNumber() {
+        return vehicleRegistrationNumber;
     }
 
-    public void setVehicle_registration_number(String vehicle_registration_number) {
-        this.vehicle_registration_number = vehicle_registration_number;
+    public void setVehicleRegistrationNumber(String vehicleRegistrationNumber) {
+        this.vehicleRegistrationNumber = vehicleRegistrationNumber;
     }
 }

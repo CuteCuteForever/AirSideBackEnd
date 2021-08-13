@@ -15,7 +15,7 @@ public class RT_VEHICLE {
     @Id
     @GeneratedValue(strategy= GenerationType.AUTO,generator="native")
     @GenericGenerator(name = "native",strategy = "native")
-    private int vehicleId;
+    private Long vehicleId;
 
     private Long companyId;
     private String registrationNumber;
@@ -26,7 +26,7 @@ public class RT_VEHICLE {
     public RT_VEHICLE() {
     }
 
-    public RT_VEHICLE(int vehicleId, Long companyId, String registrationNumber, String rowRecordStatus, LocalDateTime timestamp) {
+    public RT_VEHICLE(Long vehicleId, Long companyId, String registrationNumber, String rowRecordStatus, LocalDateTime timestamp) {
         this.vehicleId = vehicleId;
         this.companyId = companyId;
         this.registrationNumber = registrationNumber;
@@ -58,11 +58,11 @@ public class RT_VEHICLE {
         this.rowRecordStatus = rowRecordStatus;
     }
 
-    public int getVehicleId() {
+    public Long getVehicleId() {
         return vehicleId;
     }
 
-    public void setVehicleId(int vehicleId) {
+    public void setVehicleId(Long vehicleId) {
         this.vehicleId = vehicleId;
     }
 

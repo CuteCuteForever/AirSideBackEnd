@@ -29,6 +29,7 @@ public class V_TRANSPONDER_STATUS {
     private Long vehicleId;
     private String rowRecordStatus;
     private LocalDateTime timestamp;
+    private String dueNotice;
 
     private String registrationNumber;
 
@@ -50,7 +51,7 @@ public class V_TRANSPONDER_STATUS {
     public V_TRANSPONDER_STATUS() {
     }
 
-    public V_TRANSPONDER_STATUS(Long transponderStatusId, String EPC, Long companyId, LocalDateTime outTimestamp, LocalDateTime inTimestamp, String rentalDuration, Long transponderId, String transponderStatus, Long vehicleId, String rowRecordStatus, LocalDateTime timestamp, String registrationNumber, String companyName, String address, String contactPersonName, String contactPersonNumber, String department, String callSign, String serialNumber, String serviceAvailability, String description, LocalDate warrantyFromDate, LocalDate warrantyToDate, String duration) {
+    public V_TRANSPONDER_STATUS(Long transponderStatusId, String EPC, Long companyId, LocalDateTime outTimestamp, LocalDateTime inTimestamp, String rentalDuration, Long transponderId, String transponderStatus, Long vehicleId, String rowRecordStatus, LocalDateTime timestamp, String dueNotice, String registrationNumber, String companyName, String address, String contactPersonName, String contactPersonNumber, String department, String callSign, String serialNumber, String serviceAvailability, String description, LocalDate warrantyFromDate, LocalDate warrantyToDate, String duration) {
         this.transponderStatusId = transponderStatusId;
         this.EPC = EPC;
         this.companyId = companyId;
@@ -62,6 +63,7 @@ public class V_TRANSPONDER_STATUS {
         this.vehicleId = vehicleId;
         this.rowRecordStatus = rowRecordStatus;
         this.timestamp = timestamp;
+        this.dueNotice = dueNotice;
         this.registrationNumber = registrationNumber;
         this.companyName = companyName;
         this.address = address;
@@ -75,6 +77,14 @@ public class V_TRANSPONDER_STATUS {
         this.warrantyFromDate = warrantyFromDate;
         this.warrantyToDate = warrantyToDate;
         this.duration = duration;
+    }
+
+    public String getDueNotice() {
+        return dueNotice;
+    }
+
+    public void setDueNotice(String dueNotice) {
+        this.dueNotice = dueNotice;
     }
 
     public Long getTransponderStatusId() {

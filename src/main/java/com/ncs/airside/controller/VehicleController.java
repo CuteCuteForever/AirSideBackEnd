@@ -62,4 +62,19 @@ public class VehicleController {
         }
     }
 
+    @GetMapping("/vehicle/{companyId}")
+    public ResponseEntity<Object> retrieveVehicleByCompanyId(@PathVariable Long companyId){
+
+        List<RT_VEHICLE> vehicle =  rt_vehicle_repo.findByCompanyIdAndRowRecordStatus(companyId,"valid");
+
+        if (vehicle.size() == 0){
+            return ResponseEntity
+                    .badRequest()
+                    .body(new MessageResponse("No vehicle registered with current company"));
+        }
+        return ResponseEntity
+                .ok()
+                .body(vehicle);
+    }
 }
+

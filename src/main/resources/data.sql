@@ -17,16 +17,18 @@ INSERT INTO airsidedb.rt_role(id,name) VALUES(2,'ROLE_ADMIN');
 
 create or replace view airsidedb.v_vehicle_company as
 select
-b.companyid,
+b.company_id,
+a.vehicle_id,
 b.company_name as company_name,
 b.address as company_address,
 b.contact_person_name as contact_person_name,
 b.contact_person_number as contact_person_number,
 b.department,
 a.registration_number as vehicle_registration_number
-from airsidedb.rt_vehicle a inner join airsidedb.rt_company b on a.companyid = b.companyid
+from airsidedb.rt_vehicle a inner join airsidedb.rt_company b on a.company_id = b.company_id
 where a.row_record_status = 'valid'
 and b.row_record_status = 'valid';
+
 
 
 create or replace view airsidedb.v_transponder_status as
@@ -39,6 +41,12 @@ WITH difference_in_seconds AS (
   FROM
   (
   select a.* ,
+  CASE
+     WHEN rental_duration = 'Weekly' and DATE_ADD(DATE(out_timestamp), INTERVAL 2 DAY) > curdate()  THEN 'Due Soon'
+     WHEN rental_duration = 'Monthly' and DATE_ADD(DATE(out_timestamp), INTERVAL 1 WEEK) > curdate()  THEN 'Due Soon'
+     WHEN rental_duration = 'Yearly' and DATE_ADD(DATE(out_timestamp), INTERVAL 1 WEEK) > curdate()  THEN 'Due Soon'
+     ELSE ""
+END AS due_notice  ,
 b.registration_number,
 c.company_name, c.address , c.contact_person_name, c.contact_person_number, c.department,
 d.call_sign, d.serial_number, d.service_availability, d.description, d.warranty_from_date, d.warranty_to_date
@@ -65,5 +73,5 @@ SELECT
     seconds_part, ' seconds'
   ) AS duration
 FROM differences
-) as a
+) as resultTable
 

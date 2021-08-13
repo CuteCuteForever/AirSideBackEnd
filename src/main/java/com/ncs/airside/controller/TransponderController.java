@@ -1,6 +1,7 @@
 package com.ncs.airside.controller;
 
 import com.ncs.airside.model.account.MessageResponse;
+import com.ncs.airside.model.database.RT_COMPANY;
 import com.ncs.airside.model.database.RT_TRANSPONDER;
 import com.ncs.airside.repository.RT_TRANSPONDER_REPO;
 import org.slf4j.Logger;
@@ -23,7 +24,7 @@ public class TransponderController {
 
     @GetMapping("/transpondersInfos")
     public List<RT_TRANSPONDER> retrieveAllTransponders(){
-        return rt_transponder_repo.findAll();
+        return rt_transponder_repo.findAllByRowRecordStatus("valid");
     }
 
     @PostMapping("/insertTransponder")
@@ -44,17 +45,66 @@ public class TransponderController {
                     .body(new MessageResponse("Call Sign Existed. Please use another EPC."));
         }
 
-       /* LocalDateTime warrantyFromDate = LocalDateTime.parse(rt_transponder.getWarrantyFromDate().toString());
-        rt_transponder.setWarrantyFromDate(warrantyFromDate.toLocalDate());
-
-        LocalDateTime warrantyToDate = LocalDateTime.parse(rt_transponder.getWarrantyToDate().toString());
-        rt_transponder.setWarrantyToDate(warrantyToDate.toLocalDate());
-*/
         rt_transponder_repo.save(rt_transponder);
 
         return ResponseEntity
                 .ok()
                 .body(new MessageResponse("Insert Transponder Successfully"));
+    }
+
+    @PostMapping("/updateTransponder")
+    public ResponseEntity<Object> updateTransponder(@RequestBody RT_TRANSPONDER transponder) {
+
+        Optional<RT_TRANSPONDER> transponderOptional = rt_transponder_repo.
+                findByEPCAndServiceAvailabilityAndRowRecordStatus(transponder.getEPC(), transponder.getServiceAvailability(), "valid");
+
+        if (transponder.getCallSign().equals(transponderOptional.get().getCallSign())
+                && transponder.getSerialNumber().equals(transponderOptional.get().getSerialNumber())
+                && transponder.getServiceAvailability().equals(transponderOptional.get().getServiceAvailability())
+                && transponder.getDescription().equals(transponderOptional.get().getDescription())
+                && transponder.getWarrantyFromDate().equals(transponderOptional.get().getWarrantyFromDate())
+                && transponder.getWarrantyToDate().equals(transponderOptional.get().getWarrantyToDate())
+                && transponder.getEPC().equals(transponderOptional.get().getEPC())
+        ) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(new MessageResponse("No changes detected."));
+        }
+
+        transponderOptional.get().setRowRecordStatus("invalid");
+        rt_transponder_repo.save(transponderOptional.get());
+
+        //insert new records for company update
+        RT_TRANSPONDER newTransponder = new RT_TRANSPONDER();
+
+        newTransponder.setCallSign(transponder.getCallSign());
+        newTransponder.setSerialNumber(transponder.getSerialNumber());
+        newTransponder.setDescription(transponder.getDescription());
+        newTransponder.setServiceAvailability(transponder.getServiceAvailability());
+        newTransponder.setWarrantyFromDate(transponder.getWarrantyFromDate());
+        newTransponder.setWarrantyToDate(transponder.getWarrantyToDate());
+        newTransponder.setEPC(transponder.getEPC());
+        newTransponder.setRowRecordStatus("valid");
+        newTransponder.setTimestamp(LocalDateTime.now());
+        rt_transponder_repo.save(newTransponder);
+
+        return ResponseEntity
+                .ok()
+                .body(new MessageResponse("Update call sign " +transponder.getCallSign() +" successfully"));
+    }
+
+    @GetMapping("/deleteTransponder/{callSign}")
+    public ResponseEntity<Object> deleteCompany(@PathVariable String callSign) {
+
+        Optional<RT_TRANSPONDER> transponderOptional = rt_transponder_repo.
+                findByCallSignAndServiceAvailabilityAndRowRecordStatus(callSign, "Not Spare" , "valid");
+
+        transponderOptional.get().setRowRecordStatus("invalid");
+        rt_transponder_repo.save(transponderOptional.get());
+
+        return ResponseEntity
+                .ok()
+                .body(new MessageResponse("Deleted call sign " + callSign + " successfully"));
     }
 
     @GetMapping("/gettransponderbyepc/{epcNumber}/{rowRecordStatus}")
