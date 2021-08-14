@@ -12,10 +12,8 @@ import java.time.LocalDateTime;
 public class RT_COMPANY {
 
     @Id
-    @GeneratedValue(strategy= GenerationType.AUTO,generator="native")
-    @GenericGenerator(name = "native",strategy = "native")
+    @GeneratedValue(strategy= GenerationType.SEQUENCE)
     private Long companyId;
-
     private String companyName;
     private String address;
     private String contactPersonName;

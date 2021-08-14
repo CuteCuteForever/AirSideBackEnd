@@ -19,4 +19,7 @@ public class VehicleCompanyController {
     public List<V_VEHICLE_COMPANY> retrieveVehicleCompanyInfos(){
         return v_vehicle_company_repo.findAll();
     }
+
+
+
 }

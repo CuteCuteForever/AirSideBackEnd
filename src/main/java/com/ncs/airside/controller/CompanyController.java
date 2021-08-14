@@ -101,6 +101,18 @@ public class CompanyController {
     }
 
 
+    @GetMapping("/uniqueCompany")
+    public ResponseEntity<Object> retrieveUniqueCompany() {
+
+        List<RT_COMPANY> companyList = rt_company_repo.
+                findDistinctCompanyNameByRowRecordStatus("valid");
+
+        return ResponseEntity
+                .ok()
+                .body(companyList);
+    }
+
+
     @GetMapping("/company/{companyName}/{rowRecordStatus}")
     public ResponseEntity<Object> retrieveCompany(@PathVariable String companyName, @PathVariable String rowRecordStatus) {
         Optional<RT_COMPANY> companyOptional = rt_company_repo.findByCompanyNameAndRowRecordStatus(companyName, rowRecordStatus);

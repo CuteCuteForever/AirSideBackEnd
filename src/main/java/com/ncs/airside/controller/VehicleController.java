@@ -1,6 +1,7 @@
 package com.ncs.airside.controller;
 
 import com.ncs.airside.model.account.MessageResponse;
+import com.ncs.airside.model.database.RT_COMPANY;
 import com.ncs.airside.model.database.RT_VEHICLE;
 import com.ncs.airside.repository.RT_VEHICLE_REPO;
 import org.slf4j.Logger;
@@ -9,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -44,6 +46,53 @@ public class VehicleController {
                     .body(new MessageResponse("Insert Vehicle Successfully"));
         }
     }
+
+    @PostMapping("/updateVehicle")
+    public ResponseEntity<Object> updateVehicle(@RequestBody RT_VEHICLE vehicle) {
+
+        Optional<RT_VEHICLE> vehicleOptional = rt_vehicle_repo.
+                findByVehicleIdAndRowRecordStatus(vehicle.getVehicleId(), "valid");
+
+        if (vehicle.getCompanyId().equals(vehicleOptional.get().getCompanyId())
+                && vehicle.getRegistrationNumber().equals(vehicleOptional.get().getRegistrationNumber())
+        ) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(new MessageResponse("No changes detected."));
+        }
+
+        vehicleOptional.get().setRowRecordStatus("invalid");
+        rt_vehicle_repo.save(vehicleOptional.get());
+
+        //insert new records for vehicle update
+        RT_VEHICLE newVehicle = new RT_VEHICLE();
+
+        newVehicle.setCompanyId(vehicle.getCompanyId());
+        newVehicle.setRegistrationNumber(vehicle.getRegistrationNumber());
+        newVehicle.setRowRecordStatus("valid");
+        newVehicle.setTimestamp(LocalDateTime.now());
+
+        rt_vehicle_repo.save(newVehicle);
+
+        return ResponseEntity
+                .ok()
+                .body(new MessageResponse("Update company " + newVehicle.getRegistrationNumber() + " successfully"));
+    }
+
+    @PostMapping("/deleteVehicle")
+    public ResponseEntity<Object> deleteVehicle(@RequestBody RT_VEHICLE vehicle) {
+
+        Optional<RT_VEHICLE> vehicleOptional = rt_vehicle_repo.
+                findByVehicleIdAndRowRecordStatus(vehicle.getVehicleId(), "valid");
+
+        vehicleOptional.get().setRowRecordStatus("invalid");
+        rt_vehicle_repo.save(vehicleOptional.get());
+
+        return ResponseEntity
+                .ok()
+                .body(new MessageResponse("Deleted vehicle registration number " + vehicle.getRegistrationNumber() + " successfully"));
+    }
+
 
     @GetMapping("/vehicle/{registrationNumber}/{rowRecordStatus}")
     public ResponseEntity<Object> retrieveVehicleByRegistrationNumber(@PathVariable String registrationNumber , @PathVariable String rowRecordStatus){

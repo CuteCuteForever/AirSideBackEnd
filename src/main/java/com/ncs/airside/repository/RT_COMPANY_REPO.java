@@ -13,4 +13,5 @@ public interface RT_COMPANY_REPO extends JpaRepository<RT_COMPANY, Long> {
     Optional<RT_COMPANY> findByCompanyNameAndRowRecordStatus(String companyName , String rowRecordStatus);
     List<RT_COMPANY> findAllByRowRecordStatus(String rowRecordStatus);
     void deleteByCompanyName(String companyName);
+    List<RT_COMPANY> findDistinctCompanyNameByRowRecordStatus(String rowRecordStatus);
 }

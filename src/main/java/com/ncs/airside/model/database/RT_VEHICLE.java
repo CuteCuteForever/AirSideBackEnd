@@ -13,8 +13,7 @@ import java.time.LocalDateTime;
 public class RT_VEHICLE {
 
     @Id
-    @GeneratedValue(strategy= GenerationType.AUTO,generator="native")
-    @GenericGenerator(name = "native",strategy = "native")
+    @GeneratedValue(strategy= GenerationType.AUTO)
     private Long vehicleId;
 
     private Long companyId;
