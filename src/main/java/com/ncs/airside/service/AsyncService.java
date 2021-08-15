@@ -1,7 +1,7 @@
 package com.ncs.airside.service;
 
 import com.ncs.airside.Exception.SoundAlertException;
-import com.ncs.airside.helper.SoundUtils;
+import com.ncs.airside.helper.Alarm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,9 +21,15 @@ public class AsyncService {
 	private String hostnameUrl;
 
 	@Async("asyncExecutor")
-	public void AntennaStartScan() throws InterruptedException
+	public void AntennaPassiveStartScan() throws InterruptedException
 	{
-		new RestTemplate().getForEntity("http://"+hostnameUrl+":8080/antennastartcontinouosscan", null);
+		new RestTemplate().getForEntity("http://"+hostnameUrl+":8080/antennaPassiveStartContinuousScan", null);
+	}
+
+	@Async("asyncExecutor")
+	public void AntennaActiveStartScan() throws InterruptedException
+	{
+		new RestTemplate().getForEntity("http://"+hostnameUrl+":8080/antennaActiveStartContinuousScan", null);
 	}
 
 	@Async("asyncExecutor")
@@ -39,22 +45,6 @@ public class AsyncService {
 		new RestTemplate().getForEntity("http://"+hostnameUrl+":8080/rfidscantagMuliple/"+numberOfTimes, null);
 	}
 
-	public static AtomicBoolean isAlarmTriggerAtomic = new AtomicBoolean(false);
-
-	@Async("asyncExecutor")
-	public void toggleSoundAlert()
-	{
-		while(isAlarmTriggerAtomic.get()) {
-			try {
-				SoundUtils.tone(5000, 600);
-				Thread.sleep(500);
-			} catch (Exception ex){
-				throw new SoundAlertException("Error loading sound alert for unscanned EPC");
-			}
-		}
-
-		isAlarmTriggerAtomic.set(false);
-	}
 
 }
 

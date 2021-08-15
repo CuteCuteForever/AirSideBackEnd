@@ -1,21 +1,19 @@
 package com.ncs.airside.model.database;
 
-import org.hibernate.annotations.GenericGenerator;
-
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
 public class RT_VEHICLE {
 
     @Id
-    @GeneratedValue(strategy= GenerationType.AUTO)
-    private Long vehicleId;
+    @GeneratedValue(strategy= GenerationType.SEQUENCE)
+    private Long vehicleRowId;
 
+    private Long vehicleId;
     private Long companyId;
     private String registrationNumber;
     private String rowRecordStatus;
@@ -25,12 +23,21 @@ public class RT_VEHICLE {
     public RT_VEHICLE() {
     }
 
-    public RT_VEHICLE(Long vehicleId, Long companyId, String registrationNumber, String rowRecordStatus, LocalDateTime timestamp) {
+    public RT_VEHICLE(Long vehicleRowId, Long vehicleId, Long companyId, String registrationNumber, String rowRecordStatus, LocalDateTime timestamp) {
+        this.vehicleRowId = vehicleRowId;
         this.vehicleId = vehicleId;
         this.companyId = companyId;
         this.registrationNumber = registrationNumber;
         this.rowRecordStatus = rowRecordStatus;
         this.timestamp = timestamp;
+    }
+
+    public Long getVehicleRowId() {
+        return vehicleRowId;
+    }
+
+    public void setVehicleRowId(Long vehicleRowId) {
+        this.vehicleRowId = vehicleRowId;
     }
 
     public Long getCompanyId() {

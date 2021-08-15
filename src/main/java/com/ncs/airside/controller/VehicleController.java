@@ -1,8 +1,10 @@
 package com.ncs.airside.controller;
 
 import com.ncs.airside.model.account.MessageResponse;
+import com.ncs.airside.model.database.HIBERNATE_SEQUENCE;
 import com.ncs.airside.model.database.RT_COMPANY;
 import com.ncs.airside.model.database.RT_VEHICLE;
+import com.ncs.airside.repository.HIBERNATE_SEQUENCE_REPO;
 import com.ncs.airside.repository.RT_VEHICLE_REPO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +24,9 @@ public class VehicleController {
     @Autowired
     private RT_VEHICLE_REPO rt_vehicle_repo;
 
+    @Autowired
+    HIBERNATE_SEQUENCE_REPO rt_hibernate_sequence_repo;
+
     @GetMapping("/vehicleInfos")
     public List<RT_VEHICLE> retrieveVehicleCompanyInfos(){
         return rt_vehicle_repo.findAll();
@@ -30,8 +35,6 @@ public class VehicleController {
     @PostMapping("/insertVehicle")
     public ResponseEntity<Object> createVehicle(@RequestBody RT_VEHICLE vehicle){
 
-        System.out.println(vehicle);
-
         Optional<RT_VEHICLE> vehicleOptional =  rt_vehicle_repo.
                 findByRegistrationNumberAndRowRecordStatus(vehicle.getRegistrationNumber(),"valid");
 
@@ -39,23 +42,31 @@ public class VehicleController {
             return ResponseEntity
                     .badRequest()
                     .body(new MessageResponse("Vehicle already existed. Please insert another."));
-        } else {
-            rt_vehicle_repo.save(vehicle);
-            return ResponseEntity
-                    .ok()
-                    .body(new MessageResponse("Insert Vehicle Successfully"));
         }
+
+        List<HIBERNATE_SEQUENCE> hibernateSequencesList = rt_hibernate_sequence_repo.findAll();
+        HIBERNATE_SEQUENCE rtHibernateSequence = hibernateSequencesList.get(0);
+
+        Long nextVal = rtHibernateSequence.getNextVal();
+        vehicle.setVehicleId(nextVal);
+        rt_vehicle_repo.save(vehicle);
+
+        return ResponseEntity
+                .ok()
+                .body(new MessageResponse("Insert Vehicle Successfully"));
+
     }
 
     @PostMapping("/updateVehicle")
     public ResponseEntity<Object> updateVehicle(@RequestBody RT_VEHICLE vehicle) {
 
         Optional<RT_VEHICLE> vehicleOptional = rt_vehicle_repo.
-                findByVehicleIdAndRowRecordStatus(vehicle.getVehicleId(), "valid");
+                findByVehicleRowIdAndRowRecordStatus(vehicle.getVehicleRowId(), "valid");
 
-        if (vehicle.getCompanyId().equals(vehicleOptional.get().getCompanyId())
+        if (vehicleOptional.isPresent() && (vehicle.getCompanyId().equals(vehicleOptional.get().getCompanyId())
                 && vehicle.getRegistrationNumber().equals(vehicleOptional.get().getRegistrationNumber())
-        ) {
+                && vehicle.getVehicleId().equals(vehicleOptional.get().getVehicleId())
+        )) {
             return ResponseEntity
                     .badRequest()
                     .body(new MessageResponse("No changes detected."));
@@ -64,16 +75,14 @@ public class VehicleController {
         vehicleOptional.get().setRowRecordStatus("invalid");
         rt_vehicle_repo.save(vehicleOptional.get());
 
-        //insert new records for vehicle update
         RT_VEHICLE newVehicle = new RT_VEHICLE();
-
+        newVehicle.setVehicleId(vehicle.getVehicleId());
         newVehicle.setCompanyId(vehicle.getCompanyId());
         newVehicle.setRegistrationNumber(vehicle.getRegistrationNumber());
         newVehicle.setRowRecordStatus("valid");
         newVehicle.setTimestamp(LocalDateTime.now());
 
         rt_vehicle_repo.save(newVehicle);
-
         return ResponseEntity
                 .ok()
                 .body(new MessageResponse("Update company " + newVehicle.getRegistrationNumber() + " successfully"));
@@ -83,7 +92,7 @@ public class VehicleController {
     public ResponseEntity<Object> deleteVehicle(@RequestBody RT_VEHICLE vehicle) {
 
         Optional<RT_VEHICLE> vehicleOptional = rt_vehicle_repo.
-                findByVehicleIdAndRowRecordStatus(vehicle.getVehicleId(), "valid");
+                findByVehicleRowIdAndRowRecordStatus(vehicle.getVehicleRowId(), "valid");
 
         vehicleOptional.get().setRowRecordStatus("invalid");
         rt_vehicle_repo.save(vehicleOptional.get());

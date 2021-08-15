@@ -21,8 +21,7 @@ import reactor.core.publisher.Flux;
 import java.time.Duration;
 import java.util.Locale;
 import java.util.Optional;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -43,70 +42,9 @@ public class RFIDController {
     @Autowired
     private AsyncService asyncService;
 
+
     @GetMapping("/rfidopen")
     public ResponseEntity rficOpen() {
-
-        boolean isContinueRFIDScan = true;
-
-        while (isContinueRFIDScan) {
-            if (RFID.instance.CFHid_GetUsbCount() > 0) {
-                if (RFID.instance.CFHid_OpenDevice(0)) {
-
-                    byte[] arrBuffer = new byte[48];
-                    byte addr = (byte) 0xff;
-                    if (RFID.instance.CFHid_GetDeviceSystemInfo(addr, arrBuffer))  //Get DeviceInfo
-                    {
-                        String str = "", str1 = "";
-                        str = String.format("SoftVer:%d.%d\r\n", arrBuffer[0] >> 4, arrBuffer[0] & 0x0F);
-                        logger.info(str);
-                        str = String.format("HardVer:%d.%d\r\n", arrBuffer[1] >> 4, arrBuffer[1] & 0x0F);
-                        logger.info(str);
-                        str = "SN:";
-                        for (int i = 0; i < 7; i++) {
-                            str1 = String.format("%02X", arrBuffer[2 + i]);
-                            str = str + str1;
-                        }
-                        str = str + "\r\n";
-                        logger.info(str);
-
-                        RFID.instance.CFHid_ClearTagBuf();
-                        HttpHeaders responseHeaders = new HttpHeaders();
-                        responseHeaders.set("Soft Version", String.valueOf(arrBuffer[0] & 0x0F));
-                        responseHeaders.set("Hard Version", String.valueOf(arrBuffer[1] & 0x0F));
-                        responseHeaders.set("SN", str1);
-                        logger.info("Success\r\n");
-
-                        //set rf power to 30
-                        ;
-                        byte bParamAddr = 0;
-                        byte[] bValue = new byte[2];
-                        bParamAddr = (byte) 0x05;
-                        bValue[0] = (byte) Integer.parseInt(rfidRfPower);
-                        logger.info("RFID RfPower :" + rfidRfPower);
-
-                        if (RFID.instance.CFHid_SetDeviceOneParam((byte) 0xFF, bParamAddr, bValue[0]) == false) {
-                            logger.error("CFHid_ReadDeviceOneParam return false.. Looping");
-                            //return ResponseEntity.badRequest().body(new MessageResponse("CFHid_ReadDeviceOneParam return false"));
-                        }else {
-                            isContinueRFIDScan = false;
-                            logger.info("Successfully initialized Card Reader");
-                        }
-                        //return ResponseEntity.ok().body(new MessageResponse("Successfully initialized Card Reader"));
-                    }
-                    if (isContinueRFIDScan) {
-                        logger.error("Unable to CFHid_GetDeviceSystemInfo.. Looping");
-                    }
-                    //return ResponseEntity.badRequest().body(new MessageResponse("Unable to initialized RFID Card Reader"));
-                }
-            }
-            isContinueRFIDScan = false;
-            return ResponseEntity.badRequest().body(new MessageResponse("Unable to detect Card Reader in USB. Please re-connect again"));
-        }
-        return ResponseEntity.ok().body(new MessageResponse("Successfully initialized Card Reader"));
-    }
-
-    @GetMapping("/mockRfidOpen")
-    public String mockRfidOpen() {
 
         if (RFID.instance.CFHid_GetUsbCount() > 0) {
             if (RFID.instance.CFHid_OpenDevice(0)) {
@@ -133,110 +71,78 @@ public class RFIDController {
                     responseHeaders.set("Soft Version", String.valueOf(arrBuffer[0] & 0x0F));
                     responseHeaders.set("Hard Version", String.valueOf(arrBuffer[1] & 0x0F));
                     responseHeaders.set("SN", str1);
-                    logger.info("Success\r\n");
 
-                    //set rf power to 30
-                    ;
-                    byte bParamAddr = 0;
-                    byte[] bValue = new byte[2];
-                    bParamAddr = (byte) 0x05;
-                    bValue[0] = (byte) Integer.parseInt(rfidRfPower);
-                    logger.info("RFID RfPower :"+rfidRfPower);
-
-                    if (RFID.instance.CFHid_SetDeviceOneParam((byte) 0xFF, bParamAddr, bValue[0]) == false) {
-                        logger.error("Failed");
-                        //return ResponseEntity.badRequest().body("CFHid_ReadDeviceOneParam return false");
-                        return "CFHid_ReadDeviceOneParam return false";
-                    }
-
-                    //return new ResponseEntity<String>("Successfully initialized RFID Card Reader", responseHeaders, HttpStatus.OK);
-                    return "Successfully initialized RFID Card Reader";
-
-                } else logger.error("Failed");
-                //return ResponseEntity.badRequest().body("Unable to initialized RFID Card Reader");
-                return "Unable to initialized RFID Card Reader";
+                    logger.info("Successfully initialized Card Reader");
+                }
+            }else {
+                return ResponseEntity.badRequest().body(new MessageResponse("Unable to connect to Card Reader in USB. Please re-connect again"));
             }
-        } else logger.error("Failed");
-        //return ResponseEntity.badRequest().body("Please insert RFID Card Reader to USB");
-        return "Please insert RFID Card Reader to USB";
+        }else {
+            return ResponseEntity.badRequest().body(new MessageResponse("Unable to detect Card Reader in USB. Please try again"));
+        }
+        return ResponseEntity.ok().body(new MessageResponse("Successfully initialized Card Reader"));
     }
-
-
 
     @GetMapping("/rfidclose")
     public ResponseEntity rfidClose() {
 
-        logger.error("isContinueReadDeviceOneParam    "+isContinueReadDeviceOneParam.get());
-
-        isContinueReadDeviceOneParam.set(false);
-        atomicIntegerCounter.set(0);
         RFID.instance.CFHid_CloseDevice();
-
         logger.info("Close RFID Card Reader.");
 
         return ResponseEntity.ok().body(new MessageResponse("Close RFID Card Reader successfully"));
     }
 
 
+    @GetMapping("/rfidScanTransponderStatus")
+    public ResponseEntity rfidScanTransponderStatus()  {
 
-    @GetMapping("/rfidscan")
-    public ResponseEntity rfidScan()  {
-
-        try {
-
-            String epc = "";
-            boolean isContinueRFIDScan = true;
-            while (isContinueRFIDScan) {
-
-                byte[] arrBuffer = new byte[40960];
-                int[] iNum = new int[2];
-                int[] iTotalLen = new int[2];
-
-                RFID.instance.CFHid_GetTagBuf(arrBuffer, iTotalLen, iNum);
-
-                int iTagNumber = 0;
-                iTagNumber = iNum[0];
-
-                int iIndex = 0;
-                int iLength = 0;
-                byte bPackLength = 0;
-                int iIDLen = 0;
-                int i = 0;
-
-                for (iIndex = 0; iIndex < iTagNumber; iIndex++) {
-                    bPackLength = arrBuffer[iLength];
-                    String str2 = "";
-                    String str1 = "";
-                    str1 = String.format("%02X", arrBuffer[1 + iLength + 0]);
-                    if ((arrBuffer[1 + iLength + 0] & 0x80) == 0x80)  // with TimeStamp , last 6 bytes is time
-                    {
-                        iIDLen = bPackLength - 7;
-                    } else iIDLen = bPackLength - 1;
-
-
-                    String str3 = "";
-                    for (i = 2; i < iIDLen; i++) {
-                        str1 = String.format("%02X", arrBuffer[1 + iLength + i]);
-                        str3 = str3 + str1 + "";
-                    }
-                    str2 = str2 + str3;
-
-                    epc = str2;
-                    isContinueRFIDScan = false;
-                }
+        ExecutorService executor = Executors.newCachedThreadPool();
+        Callable<String> task = new Callable<String>() {
+            public String call() throws Exception{
+                return scanTagProcess();
             }
+        };
+        Future<String> future = executor.submit(task);
+        try {
+            String epc = future.get(5, TimeUnit.SECONDS);
 
-            //break out of while loop and sent back the transponder details with epc
-            Optional<RT_TRANSPONDER> transponderOptional = rt_transponder_repo.findByEPCAndServiceAvailabilityAndRowRecordStatus(epc.toUpperCase() , "Not Spare","valid");
+            Optional<RT_TRANSPONDER> transponderOptional = rt_transponder_repo.findByEPCAndServiceAvailabilityAndRowRecordStatus(epc , "Not Spare","valid");
+
             if (transponderOptional.isPresent()){
                 return ResponseEntity.ok().body(transponderOptional.get());
             }else {
                 return ResponseEntity.badRequest().body(new MessageResponse("EPC not registered with any Not Spare transponder. Please register EPC wih transponder."));
             }
+        } catch (TimeoutException ex) {
+            return ResponseEntity.badRequest().body(new MessageResponse("No EPC Tag detected. Please try again."));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(new MessageResponse("Error occured. Please try again."));
+        } finally {
+            future.cancel(true); // may or may not desire this
+        }
+    }
 
-        } catch (Exception ex){
-            ex.printStackTrace();
-            return ResponseEntity.badRequest().body(new MessageResponse("Exception error occurred. Please re-connect card reader again."));
+    @GetMapping("/rfidScanNewTransponder")
+    public ResponseEntity rfidScanNewTransponder()  {
+
+        ExecutorService executor = Executors.newCachedThreadPool();
+        Callable<String> task = new Callable<String>() {
+            public String call() throws Exception{
+                return scanTagProcess();
+            }
+        };
+        Future<String> future = executor.submit(task);
+        try {
+            String result = future.get(5, TimeUnit.SECONDS);
+            return ResponseEntity.ok().body(new MessageResponse(result));
+        } catch (TimeoutException ex) {
+            return ResponseEntity.badRequest().body(new MessageResponse("No EPC Tag detected. Please try again."));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(new MessageResponse("Error occured. Please try again."));
+        } finally {
+            future.cancel(true); // may or may not desire this
         }
     }
 
@@ -328,16 +234,37 @@ public class RFIDController {
                 .log();
     }
 
-    static volatile AtomicBoolean isContinueReadDeviceOneParam = new AtomicBoolean(true);
-    static volatile AtomicInteger atomicIntegerCounter = new AtomicInteger(0);
-    @GetMapping("/rfidreaddeviceoneparam/{index}")
+    @GetMapping("/rfidReadDeviceOneParam/{index}")
     public ResponseEntity rfidReadDeviceOneParam(@PathVariable int index) throws Exception{
 
-        String returnValue = "";
+        ExecutorService executor = Executors.newCachedThreadPool();
+        Callable<Object> task = new Callable<Object>() {
+            public Object call() throws Exception{
+                return rfidReadDeviceOneParamProcess(index);
+            }
+        };
+        Future<Object> future = executor.submit(task);
+        try {
 
-        isContinueReadDeviceOneParam.set(true);
+            Object result = future.get(3, TimeUnit.SECONDS);
+            return ResponseEntity.ok().body(new MessageResponse(String.valueOf(result)));
 
-        while (isContinueReadDeviceOneParam.get()){
+        } catch (TimeoutException ex) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Error occured. Please try again."));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(new MessageResponse("Error occured. Please try again."));
+        } finally {
+            future.cancel(true); // may or may not desire this
+        }
+    }
+
+    public String rfidReadDeviceOneParamProcess(int index) {
+
+        boolean isContinue = true;
+
+        String value ="" ;
+        while (isContinue){
 
             byte bParamAddr = 0;
             byte[] bValue = new byte[2];
@@ -351,27 +278,40 @@ public class RFIDController {
 	                07: UartBaudRate*/
             bParamAddr = (byte) index;
 
-
-            if (atomicIntegerCounter.get() == 500000){
-                isContinueReadDeviceOneParam.set(false);
-                return ResponseEntity.badRequest().body(new MessageResponse("An error occured. Please close and initialize Card Reader again."));
-            }
-            if (RFID.instance.CFHid_ReadDeviceOneParam((byte) 0xFF, bParamAddr, bValue) == false) {
-                logger.error("Failed and loop at reading device one param "+this.atomicIntegerCounter);
-                atomicIntegerCounter.getAndIncrement();
-            } else {
-                isContinueReadDeviceOneParam.set(false);
-                logger.info(String.valueOf(bValue[0]));
-                returnValue = String.valueOf(bValue[0]);
+            if (RFID.instance.CFHid_ReadDeviceOneParam((byte) 0xFF, bParamAddr, bValue)) {
+                isContinue = false;
+                value = String.valueOf(bValue[0]);
             }
         }
-        return ResponseEntity.ok().body(new MessageResponse(returnValue));
+        return value;
     }
 
 
     boolean isContinueUpdateDeviceOneParam = true;
-    @GetMapping("/rfidupdatedeviceoneparam/{index}/{value}")
-    public void rfidUpdateDeviceOneParam(@PathVariable int index , @PathVariable int value) {
+    @GetMapping("/rfidUpdateDeviceOneParam/{index}/{value}")
+    public ResponseEntity rfidUpdateDeviceOneParam(@PathVariable int index , @PathVariable int value) {
+
+        ExecutorService executor = Executors.newCachedThreadPool();
+        Callable<Object> task = new Callable<Object>() {
+            public Object call() throws Exception{
+                return rfidUpdateDeviceOneParamProcess(index, value);
+            }
+        };
+        Future<Object> future = executor.submit(task);
+        try {
+            future.get(5, TimeUnit.SECONDS);
+            return ResponseEntity.ok().body(new MessageResponse("Successfully updated parameters."));
+        } catch (TimeoutException ex) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Error occurred. Please try again."));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(new MessageResponse("Error occurred. Please try again."));
+        } finally {
+            future.cancel(true); // may or may not desire this
+        }
+    }
+
+    public String rfidUpdateDeviceOneParamProcess(int index , int value) {
 
         isContinueUpdateDeviceOneParam = true;
 
@@ -389,17 +329,15 @@ public class RFIDController {
             bParamAddr = (byte) index;
             bValue[0] = (byte) value;
 
-            if (RFID.instance.CFHid_SetDeviceOneParam((byte) 0xFF, bParamAddr, bValue[0]) == false) {
-                logger.error("Failed");
-            } else {
-                logger.info("Success");
+            if (RFID.instance.CFHid_SetDeviceOneParam((byte) 0xFF, bParamAddr, bValue[0]) ) {
                 isContinueUpdateDeviceOneParam = false;
             }
         }
+        return "Dummy success";
     }
 
     @GetMapping("/rfidsetrfpower/{rfPower}")
-    public ResponseEntity rfidSet(@PathVariable int rfPower) {
+    public ResponseEntity rfidSetRFPower(@PathVariable int rfPower) {
 
         byte bParamAddr = 0;
         byte[] bValue = new byte[2];
@@ -416,7 +354,7 @@ public class RFIDController {
     }
 
     @GetMapping("/rfidreadfreq")
-    public ResponseEntity rfidRead_1() {
+    public ResponseEntity rfidReadFrequency() {
 
         byte[] pFreq = new byte[2];
         if (RFID.instance.CFHid_ReadFreq((byte) 0xFF, pFreq) == false) {
@@ -528,6 +466,60 @@ public class RFIDController {
         }
         logger.info("Success");
         return ResponseEntity.ok().body("Stop all RF reading successfully");
+    }
+
+
+    private String scanTagProcess() {
+
+        boolean isContinue = true ;
+        String epc = "";
+        while (isContinue) {
+
+            try {
+                Thread.sleep(500);
+            } catch (Exception ex){
+                ex.printStackTrace();
+            }
+
+            byte[] arrBuffer = new byte[40960];
+            int[] iNum = new int[2];
+            int[] iTotalLen = new int[2];
+
+            RFID.instance.CFHid_GetTagBuf(arrBuffer, iTotalLen, iNum);
+
+            int iTagNumber = 0;
+            iTagNumber = iNum[0];
+
+            int iIndex = 0;
+            int iLength = 0;
+            byte bPackLength = 0;
+            int iIDLen = 0;
+            int i = 0;
+
+            for (iIndex = 0; iIndex < iTagNumber; iIndex++) {
+                bPackLength = arrBuffer[iLength];
+                String str2 = "";
+                String str1 = "";
+                str1 = String.format("%02X", arrBuffer[1 + iLength + 0]);
+                if ((arrBuffer[1 + iLength + 0] & 0x80) == 0x80)  // with TimeStamp , last 6 bytes is time
+                {
+                    iIDLen = bPackLength - 7;
+                } else iIDLen = bPackLength - 1;
+
+
+                String str3 = "";
+                for (i = 2; i < iIDLen; i++) {
+                    str1 = String.format("%02X", arrBuffer[1 + iLength + i]);
+                    str3 = str3 + str1 + "";
+                }
+                str2 = str2 + str3;
+
+                epc = str2;
+                isContinue = false;
+            }
+        }
+        logger.info("Found Tag : "+epc.toUpperCase());
+        return epc.toUpperCase();
     }
 
 

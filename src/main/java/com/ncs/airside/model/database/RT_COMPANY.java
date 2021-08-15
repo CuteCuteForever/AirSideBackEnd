@@ -13,6 +13,8 @@ public class RT_COMPANY {
 
     @Id
     @GeneratedValue(strategy= GenerationType.SEQUENCE)
+    private Long companyRowId;
+
     private Long companyId;
     private String companyName;
     private String address;
@@ -25,7 +27,8 @@ public class RT_COMPANY {
     public RT_COMPANY() {
     }
 
-    public RT_COMPANY(Long companyId, String companyName, String address, String contactPersonName, String contactPersonNumber, String department, LocalDateTime timestamp, String rowRecordStatus) {
+    public RT_COMPANY(Long companyRowId, Long companyId, String companyName, String address, String contactPersonName, String contactPersonNumber, String department, LocalDateTime timestamp, String rowRecordStatus) {
+        this.companyRowId = companyRowId;
         this.companyId = companyId;
         this.companyName = companyName;
         this.address = address;
@@ -34,6 +37,14 @@ public class RT_COMPANY {
         this.department = department;
         this.timestamp = timestamp;
         this.rowRecordStatus = rowRecordStatus;
+    }
+
+    public void setCompanyRowId(Long companyRowId) {
+        this.companyRowId = companyRowId;
+    }
+
+    public Long getCompanyRowId() {
+        return companyRowId;
     }
 
     public String getCompanyName() {

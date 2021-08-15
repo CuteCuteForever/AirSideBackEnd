@@ -1,8 +1,10 @@
 package com.ncs.airside.controller;
 
 import com.ncs.airside.model.account.MessageResponse;
+import com.ncs.airside.model.database.HIBERNATE_SEQUENCE;
 import com.ncs.airside.model.database.RT_COMPANY;
 import com.ncs.airside.model.database.RT_TRANSPONDER;
+import com.ncs.airside.repository.HIBERNATE_SEQUENCE_REPO;
 import com.ncs.airside.repository.RT_TRANSPONDER_REPO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +23,9 @@ public class TransponderController {
 
     @Autowired
     private RT_TRANSPONDER_REPO rt_transponder_repo;
+
+    @Autowired
+    HIBERNATE_SEQUENCE_REPO rt_hibernate_sequence_repo;
 
     @GetMapping("/transpondersInfos")
     public List<RT_TRANSPONDER> retrieveAllTransponders(){
@@ -45,6 +50,12 @@ public class TransponderController {
                     .body(new MessageResponse("Call Sign Existed. Please use another EPC."));
         }
 
+        List<HIBERNATE_SEQUENCE> hibernateSequenceList = rt_hibernate_sequence_repo.findAll();
+        HIBERNATE_SEQUENCE rtHibernateSequence = hibernateSequenceList.get(0);
+
+        Long nextVal = rtHibernateSequence.getNextVal();
+        rt_transponder.setTransponderId(nextVal);
+
         rt_transponder_repo.save(rt_transponder);
 
         return ResponseEntity
@@ -56,16 +67,18 @@ public class TransponderController {
     public ResponseEntity<Object> updateTransponder(@RequestBody RT_TRANSPONDER transponder) {
 
         Optional<RT_TRANSPONDER> transponderOptional = rt_transponder_repo.
-                findByEPCAndServiceAvailabilityAndRowRecordStatus(transponder.getEPC(), transponder.getServiceAvailability(), "valid");
+                findByTransponderRowIdAndRowRecordStatus(transponder.getTransponderRowId(),  "valid");
 
-        if (transponder.getCallSign().equals(transponderOptional.get().getCallSign())
-                && transponder.getSerialNumber().equals(transponderOptional.get().getSerialNumber())
-                && transponder.getServiceAvailability().equals(transponderOptional.get().getServiceAvailability())
-                && transponder.getDescription().equals(transponderOptional.get().getDescription())
-                && transponder.getWarrantyFromDate().equals(transponderOptional.get().getWarrantyFromDate())
-                && transponder.getWarrantyToDate().equals(transponderOptional.get().getWarrantyToDate())
-                && transponder.getEPC().equals(transponderOptional.get().getEPC())
-        ) {
+        if (transponderOptional.isPresent() &&
+                (transponder.getCallSign().equals(transponderOptional.get().getCallSign())
+                        && transponder.getSerialNumber().equals(transponderOptional.get().getSerialNumber())
+                        && transponder.getServiceAvailability().equals(transponderOptional.get().getServiceAvailability())
+                        && transponder.getDescription().equals(transponderOptional.get().getDescription())
+                        && transponder.getWarrantyFromDate().equals(transponderOptional.get().getWarrantyFromDate())
+                        && transponder.getWarrantyToDate().equals(transponderOptional.get().getWarrantyToDate())
+                        && transponder.getEPC().equals(transponderOptional.get().getEPC())
+                        && transponder.getTransponderId().equals(transponderOptional.get().getTransponderId())
+                )) {
             return ResponseEntity
                     .badRequest()
                     .body(new MessageResponse("No changes detected."));
@@ -86,6 +99,8 @@ public class TransponderController {
         newTransponder.setEPC(transponder.getEPC());
         newTransponder.setRowRecordStatus("valid");
         newTransponder.setTimestamp(LocalDateTime.now());
+        newTransponder.setTransponderId(transponder.getTransponderId());
+
         rt_transponder_repo.save(newTransponder);
 
         return ResponseEntity
@@ -93,18 +108,25 @@ public class TransponderController {
                 .body(new MessageResponse("Update call sign " +transponder.getCallSign() +" successfully"));
     }
 
-    @GetMapping("/deleteTransponder/{callSign}")
-    public ResponseEntity<Object> deleteCompany(@PathVariable String callSign) {
+    @PostMapping("/deleteTransponder")
+    public ResponseEntity<Object> deleteCompany(@RequestBody RT_TRANSPONDER transponder) {
 
         Optional<RT_TRANSPONDER> transponderOptional = rt_transponder_repo.
-                findByCallSignAndServiceAvailabilityAndRowRecordStatus(callSign, "Not Spare" , "valid");
+                findByTransponderRowIdAndRowRecordStatus(transponder.getTransponderRowId(), "valid");
 
-        transponderOptional.get().setRowRecordStatus("invalid");
-        rt_transponder_repo.save(transponderOptional.get());
+        if (transponderOptional.isPresent()) {
+            transponderOptional.get().setRowRecordStatus("invalid");
+            rt_transponder_repo.save(transponderOptional.get());
+            return ResponseEntity
+                    .ok()
+                    .body(new MessageResponse("Deleted call sign " + transponder.getCallSign() + " successfully"));
+        }else {
+            return ResponseEntity
+                    .ok()
+                    .body(new MessageResponse("Unsuccessful to delete call sign " + transponder.getCallSign()));
+        }
 
-        return ResponseEntity
-                .ok()
-                .body(new MessageResponse("Deleted call sign " + callSign + " successfully"));
+
     }
 
     @GetMapping("/gettransponderbyepc/{epcNumber}/{rowRecordStatus}")

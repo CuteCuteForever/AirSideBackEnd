@@ -1,7 +1,7 @@
 package com.ncs.airside.controller;
 
 import com.ncs.airside.model.account.*;
-import com.ncs.airside.repository.RT_ROLE_RESPO;
+import com.ncs.airside.repository.RT_ROLE_REPO;
 import com.ncs.airside.repository.RT_USER_REPO;
 import com.ncs.airside.security.JwtUtils;
 import com.ncs.airside.service.UserDetailsImpl;
@@ -34,7 +34,7 @@ public class UserAccountController {
     RT_USER_REPO userRepository;
 
     @Autowired
-    RT_ROLE_RESPO roleRepository;
+    RT_ROLE_REPO roleRepository;
 
     @Autowired
     PasswordEncoder encoder;

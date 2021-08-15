@@ -2,8 +2,10 @@ package com.ncs.airside.controller;
 
 import com.ncs.airside.Exception.CustomerInformationNotFoundException;
 import com.ncs.airside.model.account.MessageResponse;
+import com.ncs.airside.model.database.HIBERNATE_SEQUENCE;
 import com.ncs.airside.model.database.RT_COMPANY;
 import com.ncs.airside.model.database.RT_VEHICLE;
+import com.ncs.airside.repository.HIBERNATE_SEQUENCE_REPO;
 import com.ncs.airside.repository.RT_COMPANY_REPO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +27,9 @@ public class CompanyController {
     @Autowired
     private RT_COMPANY_REPO rt_company_repo;
 
+    @Autowired
+    HIBERNATE_SEQUENCE_REPO rt_hibernate_sequence_repo;
+
     @PostMapping("/insertCompany")
     public ResponseEntity<Object> createCompany(@RequestBody RT_COMPANY company) {
 
@@ -35,26 +40,34 @@ public class CompanyController {
             return ResponseEntity
                     .badRequest()
                     .body(new MessageResponse("Company " + company.getCompanyName() + " already existed. Please insert another."));
-        } else {
-            rt_company_repo.save(company);
-            return ResponseEntity
-                    .ok()
-                    .body(new MessageResponse("Insert company " + company.getCompanyName() + " successfully"));
         }
+
+        List<HIBERNATE_SEQUENCE> hibernateSequencesList = rt_hibernate_sequence_repo.findAll();
+        HIBERNATE_SEQUENCE rtHibernateSequence = hibernateSequencesList.get(0);
+
+        Long nextVal = rtHibernateSequence.getNextVal();
+        System.out.println(nextVal);
+        company.setCompanyId(nextVal);
+        rt_company_repo.save(company);
+        return ResponseEntity
+                .ok()
+                .body(new MessageResponse("Insert company " + company.getCompanyName() + " successfully"));
     }
 
     @PostMapping("/updateCompany")
     public ResponseEntity<Object> updateCompany(@RequestBody RT_COMPANY company) {
 
+        System.out.println("REACC");
         Optional<RT_COMPANY> companyOptional = rt_company_repo.
-                findByCompanyNameAndRowRecordStatus(company.getCompanyName(), "valid");
+                findByCompanyRowIdAndRowRecordStatus(company.getCompanyRowId(), "valid");
 
-        if (company.getCompanyName().equals(companyOptional.get().getCompanyName())
+        if (companyOptional.isPresent() && (company.getCompanyName().equals(companyOptional.get().getCompanyName())
                 && company.getAddress().equals(companyOptional.get().getAddress())
                 && company.getContactPersonName().equals(companyOptional.get().getContactPersonName())
                 && company.getContactPersonNumber().equals(companyOptional.get().getContactPersonNumber())
                 && company.getDepartment().equals(companyOptional.get().getDepartment())
-        ) {
+                && company.getCompanyId().equals(companyOptional.get().getCompanyRowId())
+        )) {
             return ResponseEntity
                     .badRequest()
                     .body(new MessageResponse("No changes detected."));
@@ -67,6 +80,7 @@ public class CompanyController {
         RT_COMPANY newCompany = new RT_COMPANY();
 
         newCompany.setCompanyName(company.getCompanyName());
+        newCompany.setCompanyId(company.getCompanyId());
         newCompany.setAddress(company.getAddress());
         newCompany.setContactPersonName(company.getContactPersonName());
         newCompany.setContactPersonNumber(company.getContactPersonNumber());
@@ -86,18 +100,18 @@ public class CompanyController {
         return rt_company_repo.findAllByRowRecordStatus("valid");
     }
 
-    @GetMapping("/deleteCompany/{companyName}")
-    public ResponseEntity<Object> deleteCompany(@PathVariable String companyName) {
+    @PostMapping("/deleteCompany")
+    public ResponseEntity<Object> deleteCompany(@RequestBody RT_COMPANY company) {
 
         Optional<RT_COMPANY> companyOptional = rt_company_repo.
-                findByCompanyNameAndRowRecordStatus(companyName, "valid");
+                findByCompanyRowIdAndRowRecordStatus(company.getCompanyRowId(), "valid");
 
         companyOptional.get().setRowRecordStatus("invalid");
         rt_company_repo.save(companyOptional.get());
 
         return ResponseEntity
                 .ok()
-                .body(new MessageResponse("Deleted company " + companyName + " successfully"));
+                .body(new MessageResponse("Deleted company " + company.getCompanyName() + " successfully"));
     }
 
 

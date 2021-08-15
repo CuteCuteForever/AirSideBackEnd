@@ -11,33 +11,43 @@ import java.util.List;
 public class RT_TRANSPONDER {
 
     @Id
-    @GeneratedValue(strategy= GenerationType.AUTO)
-    private Long transponderId;
+    @GeneratedValue(strategy= GenerationType.SEQUENCE)
+    private Long transponderRowId;
 
-    private String serialNumber;
+    private Long transponderId;
     private String callSign;
+    private String serialNumber;
+    private String serviceAvailability;
     private String description;
     private LocalDate warrantyFromDate;
     private LocalDate warrantyToDate;
     private String EPC ;
-    private String serviceAvailability;
-    private LocalDateTime timestamp ;
     private String rowRecordStatus;
+    private LocalDateTime timestamp ;
 
     public RT_TRANSPONDER() {
     }
 
-    public RT_TRANSPONDER(Long transponderId, String serialNumber, String callSign, String description, LocalDate warrantyFromDate, LocalDate warrantyToDate, String EPC, String serviceAvailability, LocalDateTime timestamp, String rowRecordStatus) {
+    public RT_TRANSPONDER(Long transponderRowId, Long transponderId, String callSign, String serialNumber, String serviceAvailability, String description, LocalDate warrantyFromDate, LocalDate warrantyToDate, String EPC, String rowRecordStatus, LocalDateTime timestamp) {
+        this.transponderRowId = transponderRowId;
         this.transponderId = transponderId;
-        this.serialNumber = serialNumber;
         this.callSign = callSign;
+        this.serialNumber = serialNumber;
+        this.serviceAvailability = serviceAvailability;
         this.description = description;
         this.warrantyFromDate = warrantyFromDate;
         this.warrantyToDate = warrantyToDate;
         this.EPC = EPC;
-        this.serviceAvailability = serviceAvailability;
-        this.timestamp = timestamp;
         this.rowRecordStatus = rowRecordStatus;
+        this.timestamp = timestamp;
+    }
+
+    public Long getTransponderRowId() {
+        return transponderRowId;
+    }
+
+    public void setTransponderRowId(Long transponderRowId) {
+        this.transponderRowId = transponderRowId;
     }
 
     public LocalDate getWarrantyFromDate() {
@@ -118,5 +128,22 @@ public class RT_TRANSPONDER {
 
     public void setRowRecordStatus(String rowRecordStatus) {
         this.rowRecordStatus = rowRecordStatus;
+    }
+
+    @Override
+    public String toString() {
+        return "RT_TRANSPONDER{" +
+                "transponderRowId=" + transponderRowId +
+                ", transponderId=" + transponderId +
+                ", callSign='" + callSign + '\'' +
+                ", serialNumber='" + serialNumber + '\'' +
+                ", serviceAvailability='" + serviceAvailability + '\'' +
+                ", description='" + description + '\'' +
+                ", warrantyFromDate=" + warrantyFromDate +
+                ", warrantyToDate=" + warrantyToDate +
+                ", EPC='" + EPC + '\'' +
+                ", rowRecordStatus='" + rowRecordStatus + '\'' +
+                ", timestamp=" + timestamp +
+                '}';
     }
 }

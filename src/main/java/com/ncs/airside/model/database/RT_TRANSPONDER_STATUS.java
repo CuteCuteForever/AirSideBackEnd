@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 public class RT_TRANSPONDER_STATUS {
 
     @Id
-    @GeneratedValue(strategy= GenerationType.AUTO)
+    @GeneratedValue(strategy= GenerationType.SEQUENCE)
     private Long transponderStatusId;
 
     private String EPC;
