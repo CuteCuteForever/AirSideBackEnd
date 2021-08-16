@@ -21,9 +21,15 @@ import reactor.core.publisher.Flux;
 import java.time.Duration;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
+
+import static com.ncs.airside.controller.AntennaController.PortHandle;
+import static com.ncs.airside.controller.AntennaController.comAddr;
 
 @RestController
 public class RFIDController {
@@ -78,7 +84,7 @@ public class RFIDController {
                 return ResponseEntity.badRequest().body(new MessageResponse("Unable to connect to Card Reader in USB. Please re-connect again"));
             }
         }else {
-            return ResponseEntity.badRequest().body(new MessageResponse("Unable to detect Card Reader in USB. Please try again"));
+            return ResponseEntity.badRequest().body(new MessageResponse("Unable to detect Card Reader in USB. Please re-plug it again"));
         }
         return ResponseEntity.ok().body(new MessageResponse("Successfully initialized Card Reader"));
     }
@@ -91,17 +97,21 @@ public class RFIDController {
 
         return ResponseEntity.ok().body(new MessageResponse("Close RFID Card Reader successfully"));
     }
-
-
+    Timer rfidTimer ;
+    private String rfidEPCValue;
     @GetMapping("/rfidScanTransponderStatus")
     public ResponseEntity rfidScanTransponderStatus()  {
 
+        RFID.instance.CFHid_ClearTagBuf();
+
         ExecutorService executor = Executors.newCachedThreadPool();
+
         Callable<String> task = new Callable<String>() {
             public String call() throws Exception{
                 return scanTagProcess();
             }
         };
+
         Future<String> future = executor.submit(task);
         try {
             String epc = future.get(5, TimeUnit.SECONDS);
@@ -126,6 +136,8 @@ public class RFIDController {
     @GetMapping("/rfidScanNewTransponder")
     public ResponseEntity rfidScanNewTransponder()  {
 
+        RFID.instance.CFHid_ClearTagBuf();
+
         ExecutorService executor = Executors.newCachedThreadPool();
         Callable<String> task = new Callable<String>() {
             public String call() throws Exception{
@@ -146,93 +158,12 @@ public class RFIDController {
         }
     }
 
-    int counter =0;
-    public static BlockingQueue<String> rfidMultipleScanBlockingQueue = new LinkedBlockingDeque<>();
-
-    @GetMapping("/rfidscantagMuliple/{numberOfTimes}")
-    public void rfidScanTag(@PathVariable int numberOfTimes) throws Exception{
-
-        while(numberOfTimes != 0) {
-            byte[] arrBuffer = new byte[40960];
-            int[] iNum = new int[2];
-            int[] iTotalLen = new int[2];
-            byte bRet = 0;
-
-            while (bRet == 0) {
-                bRet = RFID.instance.CFHid_GetTagBuf(arrBuffer, iTotalLen, iNum);
-            }
-            logger.info(String.valueOf(bRet));
-
-            int iTagLength = 0;
-            int iTagNumber = 0;
-            iTagLength = iTotalLen[0];
-            iTagNumber = iNum[0];
-            if (iTagNumber == 0) {
-                continue;
-            }
-            int iIndex = 0;
-            int iLength = 0;
-            byte bPackLength = 0;
-            int iIDLen = 0;
-            int i = 0;
-
-            for (iIndex = 0; iIndex < iTagNumber; iIndex++) {
-                bPackLength = arrBuffer[iLength];
-                String str2 = "";
-                String str1 = "";
-                str1 = String.format("%02X", arrBuffer[1 + iLength + 0]);
-                if ((arrBuffer[1 + iLength + 0] & 0x80) == 0x80)  // with TimeStamp , last 6 bytes is time
-                {
-                    iIDLen = bPackLength - 7;
-                } else iIDLen = bPackLength - 1;
-                str2 = str2 + "Type:" + str1 + " ";  //Tag Type
-
-                str1 = String.format("%02X", arrBuffer[1 + iLength + 1]);
-                str2 = str2 + "Ant:" + str1 + " Tag:";  //Ant
-
-                String str3 = "";
-                for (i = 2; i < iIDLen; i++) {
-                    str1 = String.format("%02X", arrBuffer[1 + iLength + i]);
-                    str3 = str3 + str1 + "";
-                }
-                str2 = str2 + str3;
-                str1 = String.format("%02X", arrBuffer[1 + iLength + i]);
-                str2 = str2 + "RSSI:" + str1 ;  //RSSI
-                iLength = iLength + bPackLength + 1;
-                logger.info(str2);
-                numberOfTimes--;
-                rfidMultipleScanBlockingQueue.put("Scanning " +str2 +" left:"+numberOfTimes);
-
-
-
-            }
-        }
-        rfidMultipleScanBlockingQueue.put("Successfully completed scanning "+numberOfTimes+" times");
-    }
 
     @GetMapping("/AsyncRfidScanTagMultiple/{numberOfTimes}")
     public void rfidScanTagMultiple(@PathVariable int numberOfTimes) throws InterruptedException {
         service.RfidScanMultiple(numberOfTimes);
     }
 
-    @GetMapping(value = "/receiveRFIDMultipleResult", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<String> getItemsStream(){
-
-        Flux<String> newFlux = Flux
-                .generate(sink -> {
-                    String element = rfidMultipleScanBlockingQueue.peek();
-                    if (element == null) {
-                        sink.complete();
-                    } else {
-                        sink.next(element);
-                        rfidMultipleScanBlockingQueue.poll();
-                    }
-                });
-
-        return newFlux.delayElements(Duration.ofSeconds(1))
-                .repeat()
-                .log();
-    }
 
     @GetMapping("/rfidReadDeviceOneParam/{index}")
     public ResponseEntity rfidReadDeviceOneParam(@PathVariable int index) throws Exception{
@@ -475,12 +406,6 @@ public class RFIDController {
         String epc = "";
         while (isContinue) {
 
-            try {
-                Thread.sleep(500);
-            } catch (Exception ex){
-                ex.printStackTrace();
-            }
-
             byte[] arrBuffer = new byte[40960];
             int[] iNum = new int[2];
             int[] iTotalLen = new int[2];
@@ -525,3 +450,25 @@ public class RFIDController {
 
 
 }
+
+/*
+
+
+    @GetMapping(value = "/receiveRFIDMultipleResult", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<String> getItemsStream(){
+
+        Flux<String> newFlux = Flux
+                .generate(sink -> {
+                    String element = rfidMultipleScanBlockingQueue.peek();
+                    if (element == null) {
+                        sink.complete();
+                    } else {
+                        sink.next(element);
+                        rfidMultipleScanBlockingQueue.poll();
+                    }
+                });
+
+        return newFlux.delayElements(Duration.ofSeconds(1))
+                .repeat()
+                .log();
+    }*/

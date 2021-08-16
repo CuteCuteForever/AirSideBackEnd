@@ -3,22 +3,20 @@ package com.ncs.airside.controller;
 import com.ncs.airside.model.database.RT_EPC_ACTIVE;
 import com.ncs.airside.model.database.RT_EPC_PASSIVE;
 import com.ncs.airside.model.database.RT_TRANSPONDER_STATUS;
-import com.ncs.airside.repository.RT_EPC_ACTIVE_REPO;
-import com.ncs.airside.repository.RT_EPC_PASSIVE_REPO;
-import com.ncs.airside.repository.RT_TRANSPONDER_STATUS_REPO;
+import com.ncs.airside.model.view.V_ACTIVE_STATUS;
+import com.ncs.airside.repository.*;
 import com.ncs.airside.service.AsyncService;
 import com.rfid.uhf.Device;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 import static com.ncs.airside.controller.AntennaController.PortHandle;
 import static com.ncs.airside.controller.AntennaController.comAddr;
@@ -31,9 +29,12 @@ public class AntennaActiveController {
     private RT_EPC_ACTIVE_REPO rt_epc_active_repo;
 
     @Autowired
+    private V_ACTIVE_STATUS_REPO v_active_status_repo;
+
+    @Autowired
     public Device reader;
 
-    Timer timeActive;
+    Timer timerActive;
 
     private Logger logger = LoggerFactory.getLogger(AntennaActiveController.class);
 
@@ -45,13 +46,15 @@ public class AntennaActiveController {
     @GetMapping("/activeScan/{isAntennaOne}/{isAntennaTwo}/{isAntennaThree}/{isAntennaFour}")
     public void activeScan (@PathVariable boolean isAntennaOne , @PathVariable boolean isAntennaTwo , @PathVariable boolean isAntennaThree , @PathVariable boolean isAntennaFour) {
 
+        rt_epc_active_repo.deleteAll();
+
         this.isAntennaOneA = isAntennaOne;
         this.isAntennaTwoA = isAntennaTwo;
         this.isAntennaThreeA = isAntennaThree;
         this.isAntennaFourA = isAntennaFour;
 
-        timeActive = new Timer();
-        timeActive.schedule(new TimerTask() {
+        timerActive = new Timer();
+        timerActive.schedule(new TimerTask() {
             @Override
             public void run() {
                 if (isAntennaOneA) {
@@ -76,13 +79,13 @@ public class AntennaActiveController {
 
     @GetMapping("/stopActiveScan")
     public void stopActiveScan () {
-        this.timeActive.cancel();
+        this.timerActive.cancel();
     }
 
     int counter = 0;
     public void activeScanProcess(int antennaNumber){
 
-        logger.info("Scanning Passive ..."+counter++);
+        logger.info("Scanning Active ..."+counter++);
 
             /*
                 1 byte.
@@ -271,7 +274,7 @@ public class AntennaActiveController {
                 }
 
                 logger.info(EPCMemData +" - "+antennaNumber);
-                 Optional<RT_EPC_ACTIVE> epcActiveOptional = rt_epc_active_repo.findByEPCAndRowRecordStatus(EPCMemData, "valid");
+                 Optional<RT_EPC_ACTIVE> epcActiveOptional = rt_epc_active_repo.findByEPCAndAntennaNumberAndRowRecordStatus(EPCMemData, antennaNumber,"valid");
 
                 if (!epcActiveOptional.isPresent() && !EPCMemData.equals("")) {
 
@@ -286,4 +289,33 @@ public class AntennaActiveController {
             }
         }
     }
+
+    @GetMapping("/viewActiveScan")
+    public ResponseEntity viewActiveScan () {
+
+        List<V_ACTIVE_STATUS> vActiveStatusList = v_active_status_repo.findAll();
+
+        List<V_ACTIVE_STATUS> newActiveList = new ArrayList<>();
+        V_ACTIVE_STATUS newVActiveStatus = new V_ACTIVE_STATUS();
+
+        HashMap<String , V_ACTIVE_STATUS> newMap = new HashMap();
+
+        vActiveStatusList.forEach( item -> {
+
+            if (newMap.get(item.getEPC()) == null){
+                newMap.put(item.getEPC() , item);
+            } else {
+                V_ACTIVE_STATUS obj = newMap.get(item.getEPC());
+                String antennaNumber = item.getAntennaNumber();
+                obj.setAntennaNumber(obj.getAntennaNumber()+","+antennaNumber);
+            }
+        });
+
+        for (Map.Entry<String,V_ACTIVE_STATUS> entry : newMap.entrySet()){
+            newActiveList.add(entry.getValue());
+        }
+
+        return ResponseEntity.ok().body(newActiveList);
+    }
+
 }

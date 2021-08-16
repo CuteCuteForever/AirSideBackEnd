@@ -4,6 +4,7 @@ import com.ncs.airside.model.account.MessageResponse;
 import com.ncs.airside.model.database.RT_EPC_ACTIVE;
 import com.ncs.airside.model.database.RT_EPC_PASSIVE;
 import com.ncs.airside.model.database.RT_TRANSPONDER_STATUS;
+import com.ncs.airside.model.helper.READER_ERROR_CODE;
 import com.ncs.airside.repository.RT_EPC_ACTIVE_REPO;
 import com.ncs.airside.repository.RT_EPC_PASSIVE_REPO;
 import com.ncs.airside.repository.RT_TRANSPONDER_STATUS_REPO;
@@ -36,6 +37,9 @@ public class AntennaController {
 
     @Autowired
     private RT_EPC_ACTIVE_REPO rt_epc_active_repo;
+
+    @Autowired
+    private READER_ERROR_CODE error_code;
 
     @Value("${airside.rfid.antennapower}")
     private String antennaRfPower;
@@ -285,8 +289,8 @@ public class AntennaController {
             logger.info("Successfully ");
             return ResponseEntity.ok().body("Successfully  ");
         } else {
-            logger.info("Unable to get  ");
-            return ResponseEntity.badRequest().body("Unable to get ");
+            logger.error(error_code.getErrorCode(result));
+            return ResponseEntity.badRequest().body("Unable to get Reader Information ");
         }
     }
 
@@ -314,7 +318,7 @@ public class AntennaController {
     }
 
     @GetMapping("/openAntenna/{portNumber}")
-    public ResponseEntity openAntenna (@PathVariable int portNumber) {
+    public ResponseEntity connectAntenna (@PathVariable int portNumber) {
 
         if (!isLoadAntennaLibrary) {
             System.loadLibrary("com_rfid_uhf_Device"); //read from resources folder
@@ -323,8 +327,6 @@ public class AntennaController {
         } else {
             logger.info("Library com_rfid_uhf_Device Not Loaded as already loaded once.");
         }
-
-        logger.info("The portNumber is " + portNumber);
 
         byte baud = 5;//57600bps
 
@@ -335,266 +337,27 @@ public class AntennaController {
         if (resultComPort == 0) {
             logger.info("Successfully initialized Antenna with comPort "+portNumber);
             return ResponseEntity.ok().body(new MessageResponse("Successfully initialized Antenna with comPort "+portNumber));
+        } if (resultComPort == 48) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Inventory G2 Hub not detected. Please try again"));
         }else {
-            logger.error("Unable to initialize Antenna with comPort "+portNumber +" .Please try again");
+            logger.error(resultComPort+" - "+error_code.getErrorCode(resultComPort));
             return ResponseEntity.badRequest().body(new MessageResponse("Unable to initialized Antenna. Please try again."));
         }
     }
 
-
-    private volatile AtomicBoolean isActiveContinuousScan = new AtomicBoolean(true);
-
-    @GetMapping("/antennaActiveStartContinuousScan")
-    public void antennaActiveStartContinuousScan () {
-
-        try {
-            isActiveContinuousScan.set(true);
-
-            while (this.isActiveContinuousScan.get()) {
-
-                int counter = 0;
-
-            /*
-                1 byte.
-                        bit7: Statistic data packet flag;
-                0 – after inventory，DO NOT deliver statistic data packet of inventory process;
-                1 – after inventory，deliver statistic data packet of inventory process.
-                        bit5: FastID inventory indicator.
-                        This function is used to rapidly obtain tag EPC and TID, only supported by some tags from the Impinj Monza series;
-                0 – disable;
-                1 – enable.
-                        bit4 ~ bit0: the original Q-value of EPC tag inventory.
-                NOTE:
-                1. The setting of Q-value should follow the rule: 2Q ≈ total amount of tags within the effective field. The range of Q-value is 0 ~ 15, if other value is delivered in this field, reader will return a parameter error status in the response frame.
-                2. Inventory with statistic data packet is SLOWER than inventory without statistic data packet.
-            */
-                byte QValue = 4;
-            /*
-                1 byte, the Session-value of EPC tag inventory.
-                0x00 – apply S0 as Session value;
-                0x01 – apply S1 as Session value;
-                0x02 – apply S2 as Session value;
-                0x03 – apply S3 as Session value.
-                0xff – apply reader smart configuration (only valid in EPC inventory).
-                Inventory for single tag or small amount of tag, S0 is the recommended setting.
-             */
-                byte Session = 0;
-            /*
-                1 byte, mask area indication.
-                0x01 – EPC memory;
-                0x02 – TID memory;
-                0x03 – User memory.
-             */
-                byte MaskMem = 2;
-            /*
-                2 bytes, entry bit address of the mask.
-                The valid range of MaskAdr is 0 ~ 16383.
-              */
-                byte[] MaskAdr = new byte[2];
-                /* 1 byte, bit length of mask (unit: bits).*/
-                byte MaskLen = 0;
-            /*
-                N bytes, mask data.
-                N = MaskLen/8. If MaskLen is not a multiple of 8 integer, N= int[MaskLen/8]+1.
-                Non-specified lower significant figures should be filled up with 0.
-            */
-                byte[] MaskData = new byte[256];
-            /*
-                1 byte, mask flag.
-                0 – disable mask;
-                1 – enable mask.
-            */
-                byte MaskFlag = 0;
-            /*
-                1 byte, entry address of TID memory inventory.
-            */
-                byte AdrTID = 0;
-            /*
-                1 byte, data length for TID inventory operation, the valid range of LenTID is 0 ~ 15.
-            */
-                byte LenTID = 6;
-            /*
-                1 byte, inventory purpose indicator.
-                0 – EPC inventory;
-                1 – TID inventory.
-            */
-                byte TIDFlag = 1;
-            /*
-                1 byte, the Target value of EPC tag inventory.
-                0x00 – apply Target A;
-                0x01 – apply Target B.
-            */
-                byte Target = 0;
-            /*
-                1 byte, antenna selection for the current inventory.
-                0x80 – antenna 1;   0x81 – antenna 2;
-                0x82 – antenna 3;   0x83 – antenna 4.
-                InAnt is 0x08 for single port reader.
-            */
-                byte InAnt = (byte) 0x80;
-            /*
-                1 byte, the maximum operation time for inventory.
-                The valid range of Scantime is 0 ~ 255,corresponding to (0 ~ 255)*100ms.
-                 For Scantime = 0, operation time is not limited.
-            */
-                byte Scantime = 10;
-            /*
-                1 byte, express inventory indicator
-                0 – disable express inventory, Target, InAnt and Scantime are NOT essential, can be set to default value 0;
-                1 – enable express inventory, Target, InAnt and Scantime are need to be defined.
-            */
-                byte FastFlag = 0;
-            /*
-                The inquired tag data, the data block follows the format stated below:
-                EPC/TID length + EPC/TID No. + RSSI.
-                Data of multiple tags is formed by several identical data blocks in sequence.
-            */
-                byte[] pEPCList = new byte[20000];
-            /*
-                4 antenna ports reader:
-                Every bit in Ant represents one corresponding antenna. For example, 0x04 is 0000 0100 in binary. This indicates Antenna 3 had inquired this specific tag.
-                12 antenna ports reader
-                Ant value 0 ~ 11 corresponding to Antenna 1 to Antenna 12. For example, Ant = 0 represents Antenna 1 had inquired this specific tag.
-            */
-                byte[] Ant = new byte[1];
-            /*
-                The total length of the received data stored in pEPCList.
-            */
-                int[] Totallen = new int[1];
-            /*
-                The total amount of tag inquired during the current inventory.
-            */
-                int[] CardNum = new int[1];
-
-                byte antennaByte_1 = (byte) 0x01;
-                byte antennaByte_2 = (byte) 0x02;
-                byte antennaByte_3 = (byte) 0x04;
-                byte antennaByte_4 = (byte) 0x08;
-
-                Inventory_G2ScanActive(1, antennaByte_1,QValue, Session, MaskMem, MaskAdr, MaskLen, MaskData, MaskFlag, AdrTID, LenTID, TIDFlag, Target, InAnt, Scantime, FastFlag, pEPCList, Ant, Totallen, CardNum);
-                Thread.sleep(3000);
-                Inventory_G2ScanActive(2, antennaByte_2,QValue, Session, MaskMem, MaskAdr, MaskLen, MaskData, MaskFlag, AdrTID, LenTID, TIDFlag, Target, InAnt, Scantime, FastFlag, pEPCList, Ant, Totallen, CardNum);
-                Thread.sleep(3000);
-                Inventory_G2ScanActive(3, antennaByte_3,QValue, Session, MaskMem, MaskAdr, MaskLen, MaskData, MaskFlag, AdrTID, LenTID, TIDFlag, Target, InAnt, Scantime, FastFlag, pEPCList, Ant, Totallen, CardNum);
-                Thread.sleep(3000);
-                Inventory_G2ScanActive(4 ,antennaByte_4,QValue, Session, MaskMem, MaskAdr, MaskLen, MaskData, MaskFlag, AdrTID, LenTID, TIDFlag, Target, InAnt, Scantime, FastFlag, pEPCList, Ant, Totallen, CardNum);
-                Thread.sleep(9999999);
-
-            } //end of while loop
-        } catch (Exception ex){
-            ex.printStackTrace();
-        }
-    }
-
-    private void Inventory_G2ScanActive( int AntennaNumber, byte antennaByte, byte QValue, byte session, byte maskMem, byte[] maskAdr, byte maskLen, byte[] maskData, byte maskFlag, byte adrTID, byte lenTID, byte TIDFlag, byte target, byte inAnt, byte scantime, byte fastFlag, byte[] pEPCList, byte[] ant, int[] totallen, int[] cardNum) {
-
-        reader.SetAntennaMultiplexing(comAddr, antennaByte , PortHandle[0]);
-
-        int result = reader.Inventory_G2(this.comAddr, QValue, session, maskMem, maskAdr, maskLen, maskData, maskFlag,
-                adrTID, lenTID, TIDFlag, target, inAnt, scantime, fastFlag, pEPCList, ant, totallen,
-                cardNum, PortHandle[0]);
-
-        String EPCMemData = "";
-
-        if (cardNum[0] > 0) {
-            System.out.println();
-            System.out.println();
-            int m = 0;
-            for (int index = 0; index < cardNum[0]; index++) {
-                int epclen = pEPCList[m++] & 255;
-                String EPCstr = "";
-                byte[] epc = new byte[epclen];
-                for (int n = 0; n < epclen; n++) {
-                    byte bbt = pEPCList[m++];
-                    epc[n] = bbt;
-                    String hex = Integer.toHexString(bbt & 255);
-                    if (hex.length() == 1) {
-                        hex = "0" + hex;
-                    }
-                    EPCstr += hex;
-                }
-                int rssi = pEPCList[m++];
-                //¸ù¾ÝTIDºÅÐ´Êý¾Ý
-                byte ENum = (byte) 255;//ÑÚÂë
-                byte Mem = 1;//¶ÁEPC
-                byte WordPtr = 2;//´ÓµÚ2×Ö¿ªÊ¼
-                byte Num = 6;//¶Á6¸ö×Ö
-                byte[] Password = new byte[4];
-                maskMem = 2;//TIDÑÚÂë
-                maskAdr[0] = 0;
-                maskAdr[1] = 0;
-                maskLen = 96;
-                int p = 0;
-                System.arraycopy(epc, 0, maskData, 0, 96 / 8);
-                byte[] Data = new byte[Num * 2];
-                int[] Errorcode = new int[1];
-                byte WNum = 7;
-                byte[] Wdt = new byte[WNum * 2];
-                Wdt[0] = 0x30;
-                Wdt[1] = 0x00;
-                Wdt[2] = (byte) 0xE2;
-                Wdt[3] = 0x00;
-                Wdt[4] = 0x12;
-                Wdt[5] = 0x34;
-                Wdt[6] = 0x56;
-                Wdt[7] = 0x78;
-                Wdt[8] = 0x12;
-                Wdt[9] = 0x34;
-                Wdt[10] = 0x56;
-                Wdt[11] = 0x78;
-                Wdt[12] = 0x12;
-                Wdt[13] = 0x34;
-                WordPtr = 1;
-                WordPtr = 2;
-
-                result = reader.ReadData_G2(comAddr, epc, ENum, Mem, WordPtr, Num, Password,
-                        maskMem, maskAdr, maskLen, maskData, Data, Errorcode, PortHandle[0]);
-
-                if (result == 0) {
-                    String Memdata = "";
-                    for (p = 0; p < Num * 2; p++) {
-                        byte bbt = Data[p];
-                        String hex = Integer.toHexString(bbt & 255);
-                        if (hex.length() == 1) {
-                            hex = "0" + hex;
-                        }
-                        Memdata += hex;
-                    }
-                    EPCMemData = Memdata.toUpperCase();
-                }
-
-                Optional<RT_EPC_ACTIVE> rt_epc_activeOptional = rt_epc_active_repo.findByEPCAndRowRecordStatus(EPCMemData, "VALID");
-
-                if (!rt_epc_activeOptional.isPresent() && !EPCMemData.equals("")) {
-
-                    RT_EPC_ACTIVE rt_epc_active = new RT_EPC_ACTIVE();
-                    rt_epc_active.setEPC(EPCMemData);
-                    rt_epc_active.setAntennaNumber(AntennaNumber);
-                    rt_epc_active.setTimestamp(LocalDateTime.now());
-                    rt_epc_active.setRowRecordStatus("valid");
-                    rt_epc_active_repo.save(rt_epc_active);
-                    logger.info("Inserted to EPC Active table " + rt_epc_active.toString());
-                }
-            }
-        }
-    }
-
-    @GetMapping("/antennaStopContinuousScan")
-    public void stopContinuousScan () {
-        System.out.println("SETTING IT OFF");
-        this.isActiveContinuousScan.set(false);
-    }
-
     @GetMapping("/closeAntenna")
-    public ResponseEntity closePort () {
+    public ResponseEntity closeAntenna () {
 
         int result = reader.CloseSpecComPort(this.PortHandle[0]);
 
         logger.info(String.valueOf(result));
         if (result == 0){
             return ResponseEntity.ok().body(new MessageResponse("Disconnect antenna successfully"));
+        }if (result == 55){
+            return ResponseEntity.ok().body(new MessageResponse("Antenna may have been disconnected. Please connect instead"));
         }else {
-            return ResponseEntity.badRequest().body(new MessageResponse("Antenna may have been disconnected. Please connect instead"));
+            logger.error(error_code.getErrorCode(result));
+            return ResponseEntity.badRequest().body(new MessageResponse("Error occurred : "+error_code.getErrorCode(result)));
         }
     }
 

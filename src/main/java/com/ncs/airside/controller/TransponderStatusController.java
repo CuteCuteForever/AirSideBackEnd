@@ -132,7 +132,7 @@ public class TransponderStatusController {
         }
 
         if (!isAllBorrowedTransponderExist){
-            return ResponseEntity.badRequest().body(new MessageResponse("Unable to find Borrowed transponder with EPC "+inValidEPCNumber +"."));
+            return ResponseEntity.badRequest().body(new MessageResponse("EPC "+inValidEPCNumber +" are not been borrowed yet."));
         }
 
         // Save all to db and update in_timestamp

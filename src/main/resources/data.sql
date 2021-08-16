@@ -26,7 +26,26 @@ INSERT INTO airsidedb.rt_role(id,name) VALUES(2,'ROLE_ADMIN');
 
 INSERT INTO airsidedb.hibernate_sequence(next_val) VALUES(1);
 
-create or replace view airsidedb.v_vehicle_company as select b.company_id,a.vehicle_id,b.company_name as company_name,b.address as company_address,b.contact_person_name as contact_person_name,b.contact_person_number as contact_person_number,b.department,a.registration_number as vehicle_registration_number from airsidedb.rt_vehicle a inner join airsidedb.rt_company b on a.company_id = b.company_id where a.row_record_status = 'valid'and b.row_record_status = 'valid';
+
+CREATE OR REPLACE VIEW airsidedb.v_vehicle_company AS
+    SELECT
+        b.company_id,
+        a.vehicle_id,
+        b.company_name AS company_name,
+        b.address AS company_address,
+        b.contact_person_name AS contact_person_name,
+        b.contact_person_number AS contact_person_number,
+        b.department,
+        a.registration_number AS vehicle_registration_number
+    FROM
+        airsidedb.rt_company b
+            LEFT JOIN
+        airsidedb.rt_vehicle a ON a.company_id = b.company_id
+    WHERE
+        a.row_record_status = 'valid'
+            AND b.row_record_status = 'valid';
+
+
 
 create or replace view airsidedb.v_transponder_status as
 Select *  from
@@ -39,9 +58,12 @@ WITH difference_in_seconds AS (
   (
   select a.* ,
   CASE
-     WHEN rental_duration = 'Weekly' and DATE_ADD(DATE(out_timestamp), INTERVAL 2 DAY) > curdate()  THEN 'Due Soon'
-     WHEN rental_duration = 'Monthly' and DATE_ADD(DATE(out_timestamp), INTERVAL 1 WEEK) > curdate()  THEN 'Due Soon'
-     WHEN rental_duration = 'Yearly' and DATE_ADD(DATE(out_timestamp), INTERVAL 1 WEEK) > curdate()  THEN 'Due Soon'
+     WHEN rental_duration = 'Weekly' and DATE_ADD(DATE(out_timestamp), INTERVAL 5 DAY) <= curdate()  THEN 'Due Soon'
+     WHEN rental_duration = 'Monthly' and DATE_SUB(DATE_ADD(DATE(out_timestamp), INTERVAL 1 MONTH) , INTERVAL 1 WEEK) <= curdate()  THEN 'Due Soon'
+     WHEN rental_duration = 'Yearly' and DATE_SUB(DATE_ADD(DATE(out_timestamp), INTERVAL 1 YEAR) , INTERVAL 1 WEEK) <= curdate()  THEN 'Due Soon'
+     WHEN rental_duration = 'Weekly' and DATE_ADD(DATE(out_timestamp), INTERVAL 7 DAY) >= curdate()  THEN 'Overdue'
+     WHEN rental_duration = 'Monthly' and DATE_ADD(DATE(out_timestamp), INTERVAL 1 MONTH) >= curdate()  THEN 'Overdue'
+     WHEN rental_duration = 'Yearly' and DATE_ADD(DATE(out_timestamp), INTERVAL 1 YEAR) >= curdate()  THEN 'Overdue'
      ELSE ""
 END AS due_notice  ,
 b.registration_number,
@@ -74,3 +96,44 @@ FROM differences
 
 
 
+CREATE OR REPLACE VIEW airsidedb.v_epc_active AS
+    SELECT
+        a.epc_active_row_id,
+        a.epc,
+        a.antenna_number,
+        b.transponder_id,
+        b.call_sign,
+        b.serial_number,
+        b.service_availability,
+        b.description,
+        b.warranty_from_date,
+        b.warranty_to_date
+    FROM
+        airsidedb.rt_epc_active a
+            LEFT JOIN
+        airsidedb.rt_transponder b ON a.epc = b.epc
+    WHERE
+        a.row_record_status = 'valid'
+            AND b.row_record_status = 'valid';
+
+
+
+CREATE OR REPLACE VIEW airsidedb.v_epc_passive AS
+    SELECT
+        a.epc_passive_row_id,
+        a.epc,
+        a.antenna_number,
+        b.transponder_id,
+        b.call_sign,
+        b.serial_number,
+        b.service_availability,
+        b.description,
+        b.warranty_from_date,
+        b.warranty_to_date
+    FROM
+        airsidedb.rt_epc_passive a
+            LEFT JOIN
+        airsidedb.rt_transponder b ON a.epc = b.epc
+    WHERE
+        a.row_record_status = 'valid'
+            AND b.row_record_status = 'valid';
