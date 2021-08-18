@@ -51,7 +51,7 @@ public class CompanyController {
         rt_company_repo.save(company);
         return ResponseEntity
                 .ok()
-                .body(new MessageResponse("Insert company " + company.getCompanyName() + " successfully"));
+                .body(new MessageResponse("Insert company " + company.getCompanyName() + " successfully!"));
     }
 
     @PostMapping("/updateCompany")
@@ -66,11 +66,11 @@ public class CompanyController {
                 && company.getContactPersonName().equals(companyOptional.get().getContactPersonName())
                 && company.getContactPersonNumber().equals(companyOptional.get().getContactPersonNumber())
                 && company.getDepartment().equals(companyOptional.get().getDepartment())
-                && company.getCompanyId().equals(companyOptional.get().getCompanyRowId())
+                && company.getCompanyId().equals(companyOptional.get().getCompanyId())
         )) {
             return ResponseEntity
                     .badRequest()
-                    .body(new MessageResponse("No changes detected."));
+                    .body(new MessageResponse("No changes were found for company "+company.getCompanyName()));
         }
 
         companyOptional.get().setRowRecordStatus("invalid");
@@ -91,7 +91,7 @@ public class CompanyController {
 
         return ResponseEntity
                 .ok()
-                .body(new MessageResponse("Update company " + company.getCompanyName() + " successfully"));
+                .body(new MessageResponse("Updated company " + company.getCompanyName() + " successfully"));
     }
 
 

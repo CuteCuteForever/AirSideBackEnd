@@ -57,21 +57,58 @@ public class AntennaActiveController {
         timerActive.schedule(new TimerTask() {
             @Override
             public void run() {
-                if (isAntennaOneA) {
-                    reader.SetAntennaMultiplexing(comAddr, (byte) 0x01, PortHandle[0]);
-                    activeScanProcess(1);
-                }
-                if (isAntennaTwoA) {
-                    reader.SetAntennaMultiplexing(comAddr, (byte) 0x02, PortHandle[0]);
-                    activeScanProcess(2);
-                }
-                if (isAntennaThreeA) {
-                    reader.SetAntennaMultiplexing(comAddr, (byte) 0x04, PortHandle[0]);
-                    activeScanProcess(3);
-                }
-                if (isAntennaFourA) {
-                    reader.SetAntennaMultiplexing(comAddr, (byte) 0x08, PortHandle[0]);
-                    activeScanProcess(4);
+                try {
+                    if (isAntennaOneA) {
+                        reader.SetAntennaMultiplexing(comAddr, (byte) 0x01, PortHandle[0]);
+                        activeScanProcess(1);
+                    }
+
+                    Thread.sleep(1000);
+
+                    if (isAntennaOneA) {
+                        reader.SetAntennaMultiplexing(comAddr, (byte) 0x01, PortHandle[0]);
+                        activeScanProcess(1);
+                    }
+                    if (isAntennaTwoA) {
+                        reader.SetAntennaMultiplexing(comAddr, (byte) 0x02, PortHandle[0]);
+                        activeScanProcess(2);
+                    }
+
+                    Thread.sleep(1000);
+
+                    if (isAntennaOneA) {
+                        reader.SetAntennaMultiplexing(comAddr, (byte) 0x01, PortHandle[0]);
+                        activeScanProcess(1);
+                    }
+                    if (isAntennaTwoA) {
+                        reader.SetAntennaMultiplexing(comAddr, (byte) 0x02, PortHandle[0]);
+                        activeScanProcess(2);
+                    }
+                    if (isAntennaThreeA) {
+                        reader.SetAntennaMultiplexing(comAddr, (byte) 0x04, PortHandle[0]);
+                        activeScanProcess(3);
+                    }
+
+                    Thread.sleep(1000);
+
+                    if (isAntennaOneA) {
+                        reader.SetAntennaMultiplexing(comAddr, (byte) 0x01, PortHandle[0]);
+                        activeScanProcess(1);
+                    }
+                    if (isAntennaTwoA) {
+                        reader.SetAntennaMultiplexing(comAddr, (byte) 0x02, PortHandle[0]);
+                        activeScanProcess(2);
+                    }
+                    if (isAntennaThreeA) {
+                        reader.SetAntennaMultiplexing(comAddr, (byte) 0x04, PortHandle[0]);
+                        activeScanProcess(3);
+                    }
+                    if (isAntennaFourA) {
+                        reader.SetAntennaMultiplexing(comAddr, (byte) 0x08, PortHandle[0]);
+                        activeScanProcess(4);
+                    }
+                } catch (Exception ex){
+                    ex.printStackTrace();
                 }
             }
         }, 500, 500);

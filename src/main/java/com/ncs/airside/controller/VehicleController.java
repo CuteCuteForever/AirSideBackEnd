@@ -61,7 +61,7 @@ public class VehicleController {
     public ResponseEntity<Object> updateVehicle(@RequestBody RT_VEHICLE vehicle) {
 
         Optional<RT_VEHICLE> vehicleOptional = rt_vehicle_repo.
-                findByVehicleRowIdAndRowRecordStatus(vehicle.getVehicleRowId(), "valid");
+                findByVehicleIdAndRowRecordStatus(vehicle.getVehicleId(), "valid");
 
         if (vehicleOptional.isPresent() && (vehicle.getCompanyId().equals(vehicleOptional.get().getCompanyId())
                 && vehicle.getRegistrationNumber().equals(vehicleOptional.get().getRegistrationNumber())
@@ -69,7 +69,7 @@ public class VehicleController {
         )) {
             return ResponseEntity
                     .badRequest()
-                    .body(new MessageResponse("No changes detected."));
+                    .body(new MessageResponse("No changes were found for vehicle "+vehicle.getRegistrationNumber()));
         }
 
         vehicleOptional.get().setRowRecordStatus("invalid");
@@ -92,7 +92,7 @@ public class VehicleController {
     public ResponseEntity<Object> deleteVehicle(@RequestBody RT_VEHICLE vehicle) {
 
         Optional<RT_VEHICLE> vehicleOptional = rt_vehicle_repo.
-                findByVehicleRowIdAndRowRecordStatus(vehicle.getVehicleRowId(), "valid");
+                findByVehicleIdAndRowRecordStatus(vehicle.getVehicleId(), "valid");
 
         vehicleOptional.get().setRowRecordStatus("invalid");
         rt_vehicle_repo.save(vehicleOptional.get());

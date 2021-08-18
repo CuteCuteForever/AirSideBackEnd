@@ -29,6 +29,7 @@ INSERT INTO airsidedb.hibernate_sequence(next_val) VALUES(1);
 
 CREATE OR REPLACE VIEW airsidedb.v_vehicle_company AS
     SELECT
+        a.vehicle_row_id,
         b.company_id,
         a.vehicle_id,
         b.company_name AS company_name,
@@ -47,6 +48,7 @@ CREATE OR REPLACE VIEW airsidedb.v_vehicle_company AS
 
 
 
+
 create or replace view airsidedb.v_transponder_status as
 Select *  from
 (
@@ -61,9 +63,9 @@ WITH difference_in_seconds AS (
      WHEN rental_duration = 'Weekly' and DATE_ADD(DATE(out_timestamp), INTERVAL 5 DAY) <= curdate()  THEN 'Due Soon'
      WHEN rental_duration = 'Monthly' and DATE_SUB(DATE_ADD(DATE(out_timestamp), INTERVAL 1 MONTH) , INTERVAL 1 WEEK) <= curdate()  THEN 'Due Soon'
      WHEN rental_duration = 'Yearly' and DATE_SUB(DATE_ADD(DATE(out_timestamp), INTERVAL 1 YEAR) , INTERVAL 1 WEEK) <= curdate()  THEN 'Due Soon'
-     WHEN rental_duration = 'Weekly' and DATE_ADD(DATE(out_timestamp), INTERVAL 7 DAY) >= curdate()  THEN 'Overdue'
-     WHEN rental_duration = 'Monthly' and DATE_ADD(DATE(out_timestamp), INTERVAL 1 MONTH) >= curdate()  THEN 'Overdue'
-     WHEN rental_duration = 'Yearly' and DATE_ADD(DATE(out_timestamp), INTERVAL 1 YEAR) >= curdate()  THEN 'Overdue'
+     WHEN rental_duration = 'Weekly' and DATE_ADD(DATE(out_timestamp), INTERVAL 1 WEEK) <= curdate()  THEN 'Overdue'
+     WHEN rental_duration = 'Monthly'and DATE_ADD(DATE(out_timestamp), INTERVAL 1 MONTH) <= curdate()  THEN 'Overdue'
+     WHEN rental_duration = 'Yearly' and DATE_ADD(DATE(out_timestamp), INTERVAL 1 YEAR) <= curdate()  THEN 'Overdue'
      ELSE ""
 END AS due_notice  ,
 b.registration_number,
@@ -93,6 +95,8 @@ SELECT
   ) AS duration
 FROM differences
 ) as resultTable;
+
+
 
 
 

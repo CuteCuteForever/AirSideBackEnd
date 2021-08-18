@@ -15,8 +15,9 @@ import javax.persistence.Table;
 public class V_VEHICLE_COMPANY {
 
     @Id
-    private Long companyId;
+    private Long vehicleRowId;
 
+    private Long companyId;
     private Long vehicleId;
     private String companyName;
     private String companyAddress;
@@ -28,7 +29,8 @@ public class V_VEHICLE_COMPANY {
     public V_VEHICLE_COMPANY() {
     }
 
-    public V_VEHICLE_COMPANY(Long companyId, Long vehicleId, String companyName, String companyAddress, String contactPersonName, String contactPersonNumber, String department, String vehicleRegistrationNumber) {
+    public V_VEHICLE_COMPANY(Long vehicleRowId, Long companyId, Long vehicleId, String companyName, String companyAddress, String contactPersonName, String contactPersonNumber, String department, String vehicleRegistrationNumber) {
+        this.vehicleRowId = vehicleRowId;
         this.companyId = companyId;
         this.vehicleId = vehicleId;
         this.companyName = companyName;
@@ -37,6 +39,14 @@ public class V_VEHICLE_COMPANY {
         this.contactPersonNumber = contactPersonNumber;
         this.department = department;
         this.vehicleRegistrationNumber = vehicleRegistrationNumber;
+    }
+
+    public Long getVehicleRowId() {
+        return vehicleRowId;
+    }
+
+    public void setVehicleRowId(Long vehicleRowId) {
+        this.vehicleRowId = vehicleRowId;
     }
 
     public Long getCompanyId() {
